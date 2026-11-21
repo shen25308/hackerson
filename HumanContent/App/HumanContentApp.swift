@@ -111,24 +111,25 @@ struct TabChrome: ViewModifier {
     func body(content: Content) -> some View {
         content
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                FocusDock().padding(.bottom, 8)
-            }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if store.demo {
-                    HStack {
-                        Text("正在体验示例，不写入你的档案").font(.footnote)
-                        Spacer()
-                        Button("退出示例") {
-                            store.exitDemo()
-                            sfx(.close)
+                VStack(spacing: 8) {
+                    if store.demo {
+                        HStack(spacing: 10) {
+                            Text("示例中，不写入你的档案").font(.footnote)
+                            Button("退出") {
+                                store.exitDemo()
+                                sfx(.close)
+                            }
+                            .font(.footnote.weight(.bold))
                         }
-                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Theme.ember, in: Capsule())
+                        .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
                     }
-                    .foregroundStyle(Theme.ink)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 8)
-                    .background(Theme.ember)
+                    FocusDock()
                 }
+                .padding(.bottom, 8)
             }
             .toolbarBackground(Theme.night, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)

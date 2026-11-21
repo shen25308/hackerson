@@ -331,7 +331,7 @@ struct QuestDetailView: View {
     private var footprints: some View {
         let events = store.events(for: id).suffix(5)
         return VStack(alignment: .leading, spacing: 10) {
-            SectionHeading("足迹")
+            if !events.isEmpty { SectionHeading("足迹") }
             ForEach(Array(events)) { event in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(event.time).font(.caption).monospacedDigit().foregroundStyle(Theme.dim)

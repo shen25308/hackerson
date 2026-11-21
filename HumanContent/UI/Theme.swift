@@ -300,7 +300,7 @@ struct HoldButton: View {
             .background {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        color.opacity(0.45)
+                        color.opacity(0.62)
                         color.frame(width: geo.size.width * progress)
                     }
                 }

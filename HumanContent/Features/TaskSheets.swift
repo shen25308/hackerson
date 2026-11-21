@@ -15,7 +15,7 @@ struct AddQuestSheet: View {
 
     // 界面使坏：你一停笔，它就想替你把话说完。
     @State private var ghost: String?
-    @State private var ghostBar = 1.0
+    @State private var ghostStart = Date()
     @State private var planted: String?
     @State private var offers = 0
     @State private var refused = false
@@ -38,7 +38,7 @@ struct AddQuestSheet: View {
                             Button("不用") { refuse() }.buttonStyle(.tap(.resist)).foregroundStyle(Theme.text)
                         }
                         .font(.footnote.weight(.medium))
-                        Meter(value: ghostBar, color: Theme.rose, height: 3)
+                        LabCountdownBar(start: ghostStart, duration: 2.6)
                     }
                     .transition(.opacity)
                 } else if let planted, title.hasSuffix(planted) {
@@ -88,10 +88,9 @@ struct AddQuestSheet: View {
         guard !Task.isCancelled else { return }
         let suffix = suffixes[offers % suffixes.count]
         offers += 1
-        ghostBar = 1
+        ghostStart = Date()
         withAnimation(.easeOut(duration: 0.2)) { ghost = suffix }
         sfx(.tempt)
-        withAnimation(.linear(duration: 2.6)) { ghostBar = 0 }
         try? await Task.sleep(nanoseconds: 2_600_000_000)
         guard !Task.isCancelled, ghost == suffix else { return }
         planted = suffix

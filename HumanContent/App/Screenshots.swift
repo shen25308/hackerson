@@ -30,6 +30,15 @@ enum Screenshots {
                 stage.openCouncil(task: first.id)
             }
         case "talk": stage.openTalk(online: false)
+        case "talk-game", "talk-vote", "talk-end":
+            var game = KeyCase(seed: 7)
+            if scene != "talk-game" { game.statement(optionId: "strategy-1", completed: store.gateCount) }
+            if scene == "talk-end" { game.vote(targetId: game.keeperId) }
+            TalkTable.shared.demoSeen = store.demo
+            TalkTable.shared.game = game
+            TalkTable.shared.session = "shot"
+            TalkTable.shared.recorded = true
+            stage.openTalk(online: false)
         case "talk-online": stage.openTalk(online: true)
         case "puppets": stage.tab = .puppets
         case "echo": stage.tab = .echo

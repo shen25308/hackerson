@@ -278,6 +278,8 @@ struct EchoView: View {
         guard let backup = pending else { return }
         pending = nil
         focus.clear()
+        TalkTable.shared.reset()
+        OnlineRoom.shared.resetSession()
         store.apply(backup: backup)
         dayID = nil
         sfx(.accept)

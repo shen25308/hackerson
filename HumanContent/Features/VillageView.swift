@@ -258,9 +258,11 @@ struct VillageView: View {
                         Meter(value: Double(store.hp) / 100, color: Theme.rose, height: 5).frame(width: 128)
                         Text("生命 \(store.hp) · 经验 \(store.xp)").font(.caption2).foregroundStyle(Theme.text.opacity(0.75))
                     }
+                    .fixedSize()
                 }
                 .buttonStyle(.tap)
-                Spacer()
+                .layoutPriority(1)
+                Spacer(minLength: 4)
                 Button {
                     stage.go(.echo)
                 } label: {
@@ -354,7 +356,8 @@ struct VillageView: View {
             .foregroundStyle(Theme.text)
             .padding(.horizontal, 12)
             .frame(minHeight: 38)
-            .background(Theme.night.opacity(0.72), in: Capsule())
+            .background(Theme.night.opacity(0.78), in: Capsule())
+            .overlay { Capsule().stroke(Theme.text.opacity(0.18), lineWidth: 1) }
         }
         .buttonStyle(.tap(.open))
     }
