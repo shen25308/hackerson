@@ -1,0 +1,48 @@
+name: iOS build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "HumanContent/**"
+      - "HumanContent.xcodeproj/**"
+      - "Config/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project HumanContent.xcodeproj \
+            -target HumanContent \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build.log 2>&1 || true
+          echo "::group::errors"
+          grep -E "error:" build.log | sort -u | head -300 || true
+          echo "::endgroup::"
+          tail -5 build.log
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Keep the full log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
