@@ -381,6 +381,16 @@ struct LabFeedView: View {
             .position(x: nowDo.midX, y: nowDo.midY)
         }
         .frame(width: size.width, height: size.height)
+        .background {
+            // 每条“视频”配一张山庄的画当封面，压暗后垫在文字下面。
+            Image(Atlas.sceneArt[model.current % Atlas.sceneArt.count])
+                .resizable()
+                .scaledToFill()
+                .frame(width: size.width, height: size.height)
+                .overlay(LinearGradient(colors: [Theme.night.opacity(0.35), Theme.night.opacity(0.92)], startPoint: .top, endPoint: .bottom))
+                .id(model.current)
+                .transition(.opacity)
+        }
         .background(Theme.raised)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .contentShape(Rectangle())

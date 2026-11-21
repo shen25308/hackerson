@@ -64,10 +64,13 @@ jobs:
           mkdir -p shots
           for scene in $(cat .github/shots.txt); do
             xcrun simctl terminate "$UDID" com.hackerson.humancontent 2>/dev/null || true
-            xcrun simctl launch "$UDID" com.hackerson.humancontent -shot "$scene" > /dev/null
-            sleep 5
+            PID=$(xcrun simctl launch "$UDID" com.hackerson.humancontent -shot "$scene" | awk '{print $NF}')
+            sleep 6
             xcrun simctl io "$UDID" screenshot --type=jpeg "shots/$scene.jpg" > /dev/null 2>&1
+            if kill -0 "$PID" 2>/dev/null; then echo "$scene alive" >> shots/status.txt; else echo "$scene DEAD" >> shots/status.txt; fi
           done
+          cat shots/status.txt
+          cp ~/Library/Logs/DiagnosticReports/HumanContent* shots/ 2>/dev/null || true
           ls -la shots
 
       - name: Keep the screenshots

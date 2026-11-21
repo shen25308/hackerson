@@ -8,7 +8,16 @@ enum Screenshots {
 
     static func apply(store: Store, stage: Stage) {
         guard let scene else { return }
-        SoundEngine.shared.enabled = false
+        // “audio” 场景保留声音，把音效、环境声和音乐都启动一遍，确认不会崩。
+        SoundEngine.shared.enabled = scene == "audio"
+        if scene == "audio" {
+            SoundEngine.shared.ambience = true
+            for (i, cue) in [Cue.pin, .taskComplete, .unlock, .snip, .tempt, .hold].enumerated() {
+                sfx(cue, delay: Double(i) * 0.4, pitch: cue == .hold ? 1.4 : 1)
+            }
+            MusicPlayer.shared.play()
+            stage.sheet = .music
+        }
         if scene != "empty" { store.debugLoad(sample()) }
         let first = store.today.tasks.first { !$0.done }
         switch scene {
