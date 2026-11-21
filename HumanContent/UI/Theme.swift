@@ -291,6 +291,8 @@ struct HoldButton: View {
     @State private var progress = 0.0
     @State private var timer: Timer?
     @State private var holding = false
+    /// 触发过一次之后，必须松手才能再按。
+    @State private var fired = false
 
     var body: some View {
         Text(holding ? "按住…" : title)
@@ -311,7 +313,10 @@ struct HoldButton: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in begin() }
-                    .onEnded { _ in cancel() }
+                    .onEnded { _ in
+                        cancel()
+                        fired = false
+                    }
             )
             .onDisappear { timer?.invalidate() }
             .accessibilityAddTraits(.isButton)
@@ -320,7 +325,7 @@ struct HoldButton: View {
     }
 
     private func begin() {
-        guard !holding else { return }
+        guard !holding, !fired else { return }
         holding = true
         progress = 0
         var step = 0
@@ -333,6 +338,7 @@ struct HoldButton: View {
                 t.invalidate()
                 timer = nil
                 holding = false
+                fired = true
                 action()
             }
         }
