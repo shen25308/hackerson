@@ -78,6 +78,11 @@ struct TasksView: View {
                 .accessibilityLabel("新增待办")
             }
         }
+        .onAppear {
+            #if DEBUG
+            if Screenshots.scene == "add" { adding = true }
+            #endif
+        }
         .sheet(isPresented: $adding) {
             AddQuestSheet { id in stage.taskPath = [.detail(id)] }
                 .preferredColorScheme(.dark)
@@ -216,7 +221,12 @@ struct QuestDetailView: View {
             .scrollDismissesKeyboard(.interactively)
             .nightBackground()
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear { step = quest.step }
+            .onAppear {
+                step = quest.step
+                #if DEBUG
+                if Screenshots.scene == "complete" { completing = true }
+                #endif
+            }
             .sheet(isPresented: $completing) { CompleteSheet(id: id).preferredColorScheme(.dark) }
             .sheet(isPresented: $adjusting) { AdjustSheet(id: id).preferredColorScheme(.dark) }
             .confirmationDialog("另一件事还在计时", isPresented: $switching, titleVisibility: .visible) {

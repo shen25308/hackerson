@@ -462,6 +462,15 @@ final class Store: ObservableObject {
         rolloverIfNeeded()
     }
 
+    #if DEBUG
+    /// 调试截图用：换上一份示例账本，不写盘。
+    func debugLoad(_ ledger: Ledger) {
+        if !demo { real = s }
+        demo = true
+        s = ledger
+    }
+    #endif
+
     func exportData() -> Data? { s.data(pretty: true) }
 
     var exportName: String { Backup.filename(demo: demo, today: Clock.dayID()) }

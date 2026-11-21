@@ -90,6 +90,9 @@ struct RootView: View {
             focus.startTicking()
             music.setMuted(!sound.enabled)
             if store.loadWarning { stage.say("原有记录没能读出来，现在是一座空山庄。") }
+            #if DEBUG
+            Screenshots.apply(store: store, stage: stage)
+            #endif
         }
     }
 

@@ -34,6 +34,31 @@ struct VillageView: View {
     ]
 
     var body: some View {
+        VStack(spacing: 0) {
+            hud
+            Spacer(minLength: 0)
+            bottom
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { scene.ignoresSafeArea(edges: .top) }
+        .onAppear {
+            #if DEBUG
+            if Screenshots.scene == "village-dock" { selected = "fire" }
+            if Screenshots.scene == "village-locked", let ferry = Atlas.place("ferry") {
+                selected = "ferry"
+                yaw = wrap(Atlas.bearing(ferry))
+            }
+            if Screenshots.scene == "village-puppet" {
+                selected = "puppet:guard"
+                yaw = 25
+            }
+            #endif
+        }
+        .toolbarBackground(Theme.night, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+    }
+
+    private var scene: some View {
         GeometryReader { geo in
             let size = geo.size
             let sceneHeight = size.height * 1.06
@@ -56,11 +81,6 @@ struct VillageView: View {
             .simultaneousGesture(look)
             .onTapGesture { clearSelection() }
         }
-        .ignoresSafeArea(edges: .top)
-        .overlay(alignment: .top) { hud }
-        .overlay(alignment: .bottom) { bottom }
-        .toolbarBackground(Theme.night, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("夜巡山庄全景，左右拖动环视")
     }

@@ -55,6 +55,11 @@ struct SlipsView: View {
             .page()
             .padding(.vertical, 12)
         }
+        .onAppear {
+            #if DEBUG
+            if Screenshots.scene == "cut" { cutting = true }
+            #endif
+        }
         .sheet(isPresented: $cutting) {
             if let quest { CutSheet(id: quest.id).preferredColorScheme(.dark) }
         }
