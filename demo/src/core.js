@@ -19,7 +19,7 @@ const dayLabel = (id) => {
 const newDay = (id) => ({ id, tasks: [], closed: false, loss: 0, awarded: 0, reflection: '', bonusXP: 0 });
 const freshLedger = () => ({ version: 1, hp: 84, xp: 0, attack: 2, magic: 1, streak: 0, draws: 0, role: 'Guard', lastSwitchXP: 0, days: [newDay(dayID())], cards: [], events: [], tone: 'sharp' });
 const newQuest = (title, bonus, estimate, step = '') => ({
-  id: uid(), title, original: title, bonus, estimate, step, done: false, actual: null, earned: 0, healed: 0, prep: 0,
+  id: uid(), born: Date.now(), title, original: title, bonus, estimate, step, done: false, actual: null, earned: 0, healed: 0, prep: 0,
   seed: Math.floor(Math.random() * 3), topic: 0, rounds: {}, decision: '', context: '', grade: null, xpParts: [],
 });
 

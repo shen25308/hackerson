@@ -336,6 +336,7 @@ const HATES = [
   ['scissors', '剪字条', '替你预选一张错的，8 秒后自己下剪。（02 沉默算同意）'],
   ['mask', '剧场', '“等待”允许拒绝换位，“反驳”沉默十秒算同意，“像素”永远 99.7%。三幕都不用解锁。'],
   ['moon', '收工', '默认勾好“把没做完的也记成做完”。'],
+  ['mask', '磨蹭', '写任务想太久、盯着任务不开计时、定了任务一直不动，戴冠者都会出来嘲讽你。气泡的叉一靠近就跑，点中了也关不掉，只有去做事它才走。'],
 ];
 const hateList = () => `<div class="raised stack"><b style="font-size:16px">恨点图鉴</b>${HATES.map(([ic, name, text]) => `<div class="row top"><span class="rose">${icon(ic)}</span><span class="grow"><b style="font-size:14px">${name}</b><br><span class="small dim">${text}</span></span></div>`).join('')}<p class="small dim">每一次你亲手拦下或被它带走，都会算进人类含量。</p></div>`;
 
@@ -457,6 +458,103 @@ setInterval(() => {
 }, 1000);
 window.addEventListener('resize', () => { if (UI.tab === 'village') Village.layout(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+
+/* ---------- 嘲讽：在待办里磨蹭太久，戴冠者就开口；气泡点不掉，只有去做事它才走 ---------- */
+const Taunt = (() => {
+  const LINES = {
+    add: [
+      ['写个待办想了 {s} 秒。这是待办，不是遗书。', '再想下去，今天就过完了。', '别斟酌措辞了，任务又不会给你打分。', '你是在写任务，还是在躲任务？', '{s} 秒了。剧团都替你写好三个了。'],
+      ['想了 {s} 秒了，先写个大概也行。', '写下来就好，不用完美。', '一句话就够，后面还能改。'],
+    ],
+    detail: [
+      ['盯着「{t}」看了 {s} 秒，它不会自己完成的。', '你看它，它也在看你。谁先动？', '计时按钮就在那儿，它又不咬人。', '研究了这么久，可以出一本《如何开始》了。', '再看 {s} 秒，它也还是没做完。'],
+      ['已经看了 {s} 秒，先开个计时试试？', '先做五分钟，做不下去再说。', '开始最难，按一下计时就好。'],
+    ],
+    board: [
+      ['「{t}」已经躺了 {age}，都快长蘑菇了。', '定下来就算做了？这叫许愿。', '{n} 件事在木牌上排队，你在排什么？', '说好的今天做，现在是“今天”的哪一部分？', '「{t}」：我还在等。你呢？'],
+      ['「{t}」等了你 {age}，现在开始也不晚。', '挑一件最小的，先动起来。', '{n} 件事在等你，先点开一件吧。'],
+    ],
+  };
+  const NO_CLOSE = ['点我没用，点任务。', '想关掉我？先把事做了。', '我走了，任务也不会走。', '换个地方，我还在。', '这个叉是装饰。', '关嘲讽倒是挺积极的。'];
+  const POKE = ['戳我也没用。', '别戳了，去做事。', '我不是任务，点我不加经验。'];
+  const st = { ctx: null, since: 0, n: -1, el: null, tries: 0, dodges: 0, baited: false, seen: {}, count: 0 };
+  const speed = () => window.HC_TAUNT_FAST || 1;
+  const age = (ms) => { const s = Math.max(1, Math.round(ms / 1000)); return s < 60 ? `${s} 秒` : s < 3600 ? `${Math.round(s / 60)} 分钟` : `${Math.round(s / 3600)} 小时`; };
+  const fill = (line, v) => line.replace('{s}', v.s).replace('{t}', esc(v.t || '')).replace('{age}', v.age || '').replace('{n}', v.n || '');
+
+  function context(now) {
+    if (!Store.mischief || UI.tab !== 'tasks' || UI.cover || Store.closed) return null;
+    if ((window.Login && Login.isOpen()) || (window.Lab && Lab.isOpen()) || (window.Fate && Fate.isOpen()) || $('#cer-loader') || $('#cer-lobby')) return null;
+    if (UI.sheet) return UI.sheet.name === 'add' ? { key: 'add', wait: 15 } : null;
+    if (UI.route && UI.route.detail) {
+      const t = Store.quest(UI.route.detail);
+      if (!t || t.done || UI.loading || (Focus.mine(t.id) && Focus.state.running)) return null;
+      return { key: 'detail:' + t.id, kind: 'detail', wait: 15, t: t.title };
+    }
+    if (UI.route) return null;
+    const idle = Store.today.tasks.filter((t) => !t.done && !Focus.mine(t.id));
+    if (!idle.length) return null;
+    for (const t of idle) if (!st.seen[t.id]) st.seen[t.id] = now;
+    const oldest = idle.map((t) => ({ t, born: Math.min(t.born || now, st.seen[t.id]) })).sort((a, b) => a.born - b.born)[0];
+    if (now - oldest.born < 30000 / speed()) return null;
+    return { key: 'board', wait: 8, t: oldest.t.title, age: age(now - oldest.born), n: idle.length };
+  }
+  function show(text) {
+    if (!st.el) {
+      st.el = document.createElement('div');
+      st.el.className = 'taunt';
+      st.el.id = 'taunt-box';
+      st.el.setAttribute('role', 'status');
+      st.el.innerHTML = '<span class="taunt-face art-puppet_wolfking"></span><p class="taunt-text"><b class="taunt-who">戴冠者</b><span id="taunt-line"></span></p><button type="button" class="taunt-x p0" id="taunt-x" aria-label="关闭">×</button>';
+      ($('#shell') || document.body).appendChild(st.el);
+      st.el.addEventListener('pointerover', (e) => {
+        if (e.pointerType === 'touch' || !e.target.closest('#taunt-x') || st.dodges >= 3) return;
+        const x = $('#taunt-x'), p = Number(x.dataset.p || 0), next = (p + 1 + Math.floor(Math.random() * 3)) % 4;
+        x.className = 'taunt-x p' + next; x.dataset.p = next; st.dodges++;
+        sfx('slide', { strength: 0.5 });
+      });
+      st.el.addEventListener('click', (e) => {
+        const close = e.target.closest('#taunt-x');
+        const line = close ? NO_CLOSE[st.tries++ % NO_CLOSE.length] : POKE[Math.floor(Math.random() * POKE.length)];
+        $('#taunt-line').textContent = line;
+        if (close && !st.baited) { st.baited = true; Store.logBait(true, '被嘲讽的时候，先想着把嘲讽关掉，而不是去做事'); }
+        st.el.classList.remove('shake'); void st.el.offsetWidth; st.el.classList.add('shake');
+        st.el.style.setProperty('--dx', `${Math.round((Math.random() - 0.5) * 60)}px`);
+        sfx(close ? 'lock' : 'tick', { strength: 0.6 });
+      });
+      sfx('tempt', { strength: 0.6 });
+    }
+    $('#taunt-line').textContent = text;
+  }
+  function hide(acted) {
+    if (!st.el) return;
+    st.el.remove(); st.el = null; st.dodges = 0;
+    if (acted) toast('这才对嘛。');
+  }
+  function tick() {
+    const now = Date.now(), c = context(now);
+    const key = c ? c.key : null;
+    if (key !== st.ctx) {
+      const was = st.ctx, shown = !!st.el, before = st.count;
+      st.count = Store.today.tasks.length;
+      const acted = shown && was && ((was === 'add' && st.count > before) || (was.startsWith('detail:') && (() => { const t = Store.quest(was.slice(7)); return t && (t.done || Focus.mine(t.id) || (UI.loading && UI.loading.id === t.id)); })()));
+      hide(acted);
+      st.ctx = key; st.since = now; st.n = -1;
+      if (!c) return;
+    }
+    if (!c) return;
+    st.count = Store.today.tasks.length;
+    const held = ((now - st.since) / 1000) * speed();
+    if (held < c.wait) return;
+    const n = Math.floor((held - c.wait) / 12);
+    if (n === st.n) return;
+    st.n = n;
+    const pool = LINES[c.kind || c.key][Store.sharp ? 0 : 1];
+    show(fill(pool[n % pool.length], { s: Math.round(held), t: c.t, age: c.age, n: c.n }));
+  }
+  setInterval(tick, 1000);
+  return { tick, hide };
+})();
 
 /* ---------- 进门：开幕 → 推门入座 → 登录 → 入座大厅 → 开始今夜 → 开场引导 ---------- */
 function startDoor(withCeremony) {

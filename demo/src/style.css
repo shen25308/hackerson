@@ -581,3 +581,14 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 @media (prefers-reduced-motion: reduce) {
   .cer-cover, .cer-title h1 span, .cer-title p, .cer-progress, .cer-lines, .cer-seat { animation-duration: 0.01s; animation-delay: 0s; }
 }
+
+/* 嘲讽气泡：点不掉 */
+.taunt { position: absolute; right: 28px; bottom: 110px; z-index: 65; width: min(330px, calc(100% - 28px)); display: flex; gap: 10px; align-items: flex-start; padding: 12px 38px 12px 12px; border-radius: 14px; background: var(--paper); color: var(--ink); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(204, 77, 115, 0.5); transform: translateX(var(--dx, 0)); transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1); animation: taunt-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.taunt.shake { animation: shake 0.4s; }
+.taunt-face { flex: none; width: 42px; height: 42px; border-radius: 50%; background-size: cover; background-position: 50% 18%; border: 2px solid var(--rose); }
+.taunt-text { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.55; }
+.taunt-who { display: block; font-size: 11px; color: var(--rose); font-weight: 750; letter-spacing: 0.1em; }
+.taunt-x { position: absolute; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; line-height: 1; color: rgba(0, 0, 0, 0.5); background: rgba(0, 0, 0, 0.07); transition: top 0.18s, right 0.18s, bottom 0.18s; }
+.taunt-x.p0 { top: 6px; right: 6px; } .taunt-x.p1 { top: auto; bottom: 6px; right: 6px; } .taunt-x.p2 { top: -13px; right: 46%; } .taunt-x.p3 { top: auto; bottom: -13px; right: 22px; }
+@keyframes taunt-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } }
+@media (max-width: 899px) { .taunt { left: 14px; right: 14px; width: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); } }
