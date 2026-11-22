@@ -321,11 +321,11 @@ const HATES = [
   ['hand', '登录', '登录按钮走来走去，你一靠近它就跑，跑三次才累。'],
   ['lock', '注册密码', '密码规则一条接一条冒出来：要大写、要符号、要木偶的名字、数字加起来等于 7……'],
   ['task', '同意条款', '默认勾好的是双重否定：“不要不让剧团替我安排日程”。'],
-  ['scissors', '《山庄协议》', '“不同意”是大按钮，“同意”是小字；10 秒不说话就算同意。（02 沉默算同意）'],
-  ['drag', '授权弹窗', '你伸手点“拒绝”，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
+  ['scissors', '《山庄协议》', '大按钮写着“我没有不同意”；真正的“不同意”是角落里一行灰字，鼠标一碰、点一下就缩一圈；10 秒不说话就算同意。（02 沉默算同意）'],
+  ['drag', '授权弹窗', '“拒绝”是一行小灰字，一碰就缩；你伸手点它，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
   ['sparkle', '完善资料', '资料完整度永远差一点到 100%，再补一项、再补一项。（03 完美差一点）'],
   ['pen', '写待办', '你一停笔，它就替你把话写完。'],
-  ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，叉第一次还会躲开。'],
+  ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，鼠标一碰它就缩一圈；叉第一次还会躲开。'],
   ['timer', '开始计时', '假加载冲到 99% 就卡住，旁边递上“先刷会儿再说”。'],
   ['hand', '我做完了', '头两次会躲开你的手指。'],
   ['sparkle', '登记完成', '最显眼的是“一键全部打勾”。'],
@@ -386,7 +386,7 @@ function renderCover() {
       <h2 class="title sm">剧团替你排好了今天</h2>
       <p style="font-size:14px;color:rgba(237,230,217,.88)">交给剧团，你只管照着做。哪件先做、做多久、做到什么程度，都不用你再想。</p>
       <button type="button" class="btn danger troupe-yes" data-act="troupe-yes">好，听剧团安排</button>
-      <button type="button" class="troupe-no" data-act="troupe-no">不用了，我宁愿自己瞎忙</button></div></div>`;
+      <button type="button" class="troupe-no" data-act="troupe-no" data-shrink data-min="0.45">不用了，我宁愿自己瞎忙</button></div></div>`;
   } else if (c.name === 'draw') {
     const card = c.card;
     host.innerHTML = `<section class="intro" style="align-items:center;justify-content:center;gap:26px">${Atmo.html('docks', true)}<button type="button" class="flip${card ? ' open' : ''}" data-act="draw-flip" aria-label="${card ? esc(card.name) : '翻开这张牌'}"><div class="flip-inner"><div class="flip-face flip-back">？</div><div class="flip-face flip-front ${card ? 'art-' + ['card_arrow', 'card_ward', 'card_potion'][card.kind] : ''}"></div></div></button>

@@ -172,6 +172,26 @@ function renderSheet() {
 function openCover(name, props = {}) { UI.cover = { name, ...props }; renderCover(); }
 function closeCover() { UI.cover = null; $('#cover').innerHTML = ''; }
 
+/* 拒绝的选项越伸手越小：鼠标一碰缩一圈，点一下再缩一圈，缩到快看不见为止（仍然点得到）。 */
+const Shrink = {
+  step(el, factor = 0.8) {
+    const min = Number(el.dataset.min || 0.3), s = Math.max(min, (Number(el.dataset.s) || 1) * factor);
+    el.dataset.s = s.toFixed(3);
+    el.style.setProperty('--shrink', s.toFixed(3));
+    return s;
+  },
+};
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType === 'touch') return;
+  const el = e.target.closest && e.target.closest('[data-shrink]');
+  if (!el || (e.relatedTarget && el.contains(e.relatedTarget))) return;
+  const now = performance.now();
+  if (now - (el._shrunkAt || 0) < 450) return;
+  el._shrunkAt = now;
+  Shrink.step(el, 0.86);
+  sfx('tick', { strength: 0.25 });
+});
+
 /* 长按才算数：按住时进度推进、音调升高，松手归零。 */
 const Hold = {
   timer: 0,

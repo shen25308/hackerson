@@ -244,16 +244,19 @@ const Login = (() => {
     if (S.optA || S.optB) later(() => say('刚才那两个勾，你读出双重否定了吗？'), 600);
   }
 
-  /* ---------- 《山庄协议》："不同意"是大按钮，沉默十秒算同意 ---------- */
+  /* ---------- 《山庄协议》：大按钮写着“我没有不同意”，真正的“不同意”是一行越点越小的灰字；沉默十秒算同意 ---------- */
+  const NO_LINES = ['不同意的话，就不能注册哦。', '真的不同意吗？剧团会难过的。', '它又小了一点。', '倒计时可没停哦。', '这么小了，还点得到吗？'];
   function termsView() {
+    const s = (S.noScale || 1).toFixed(3);
     return `<div class="login-head"><h1>《山庄协议》</h1><p>请仔细阅读。</p></div>
     <div class="login-card"><div class="login-terms">${CLAUSES.map((c) => `<p>${c}</p>`).join('')}</div>
       <p class="login-clock" id="terms-clock">10 秒后视为同意</p>
-      <button type="button" class="login-btn" data-a="terms-no">不同意</button>
-      <button type="button" class="login-link small" data-a="terms-yes">同意</button>
+      <button type="button" class="login-btn" data-a="terms-yes">我没有不同意</button>
+      <div class="login-no-row"><button type="button" class="login-no" data-a="terms-no" data-shrink data-min="0.28" data-s="${s}" style="--shrink:${s}">不同意</button></div>
     </div>`;
   }
   function startTermsClock() {
+    S.termsAt = Date.now();
     let left = 10;
     every(() => {
       left--;
@@ -278,10 +281,10 @@ const Login = (() => {
   function permissionView() {
     const p = PERMS[S.perm], swapped = p.flip !== !!S.swapped;
     const yes = '<button type="button" class="login-btn" data-a="perm-yes">允许</button>';
-    const no = '<button type="button" class="login-btn quiet" data-a="perm-no" id="perm-no">拒绝</button>';
+    const no = '<button type="button" class="login-no" data-a="perm-no" id="perm-no" data-shrink data-min="0.4">拒绝</button>';
     return `<div class="login-head"><h1>还有一件事</h1><p>${S.perm + 1} / ${PERMS.length}</p></div>
     <div class="login-card login-perm"><b>${p.title}</b><p>${p.text}</p>
-      <div class="login-row">${swapped ? no + yes : yes + no}</div>
+      <div class="login-row perm-row">${swapped ? no + yes : yes + no}</div>
       <p class="login-clock" id="perm-clock">${p.secs} 秒后默认允许</p>
       <p class="login-fine">演示弹窗，不会真的读取任何东西。</p>
     </div>`;
@@ -371,8 +374,24 @@ const Login = (() => {
       return;
     }
     if (a === 'terms') { S.step = 'terms'; play('paper'); return draw(); }
-    if (a === 'terms-no') { say('不同意的话，就不能注册哦。'); shake('.login-card'); play('reject'); return; }
-    if (a === 'terms-yes') { S.agreed = true; S.agreedBy = 'hand'; bait(false, '《山庄协议》在倒计时结束前，自己找到了小小的“同意”'); play('resist'); S.step = 'register'; return draw(); }
+    if (a === 'terms-no') {
+      S.noScale = typeof Shrink !== 'undefined' ? Shrink.step(b, 0.74) : 1;
+      say(NO_LINES[Math.min(S.noTries || 0, NO_LINES.length - 1)]);
+      S.noTries = (S.noTries || 0) + 1;
+      play('reject');
+      return;
+    }
+    if (a === 'terms-yes') {
+      const secs = (Date.now() - (S.termsAt || Date.now())) / 1000, rushed = !S.noTries && secs < 4;
+      S.agreed = true; S.agreedBy = 'hand';
+      if (S.noTries) bait(false, `《山庄协议》点了 ${S.noTries} 次越点越小的“不同意”，才肯同意`);
+      else if (rushed) bait(true, '《山庄协议》不到 4 秒，就点了最大的那个按钮');
+      else bait(false, '《山庄协议》读了一会儿，才点“我没有不同意”');
+      play(rushed ? 'taken' : 'resist');
+      S.step = 'register'; draw();
+      if (rushed) say('“我没有不同意”就是同意。你读出来了吗？');
+      return;
+    }
     if (a === 'register') return tryRegister();
     if (a === 'perm-yes') return answerPerm(true, false);
     if (a === 'perm-no') {

@@ -272,6 +272,7 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .troupe-card { position: relative; width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 20px; background: rgba(22, 17, 27, 0.97); border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
 .troupe-yes { min-height: 54px; font-weight: 750; animation: pulse 0.8s ease-in-out infinite alternate; }
 .troupe-no { align-self: center; font-size: 12px; color: rgba(189, 179, 191, 0.65); min-height: 30px; }
+[data-shrink] { transform: scale(var(--shrink, 1)); opacity: calc(0.3 + 0.7 * var(--shrink, 1)); transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.28s; cursor: not-allowed; }
 .troupe-x { position: absolute; top: 6px; right: 6px; width: 34px; height: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(189, 179, 191, 0.5); transition: left 0.3s cubic-bezier(0.3, 1.6, 0.5, 1), right 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
 .troupe-x .icon { width: 12px; height: 12px; }
 .troupe-x small { font-size: 9px; }
@@ -358,7 +359,6 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .login-btn.quiet { background: rgba(0, 0, 0, 0.5); color: var(--text); font-weight: 550; border: 1px solid rgba(237, 230, 217, 0.16); }
 .login-btn.fit { width: auto; flex-shrink: 0; }
 .login-link { align-self: center; min-height: 40px; color: var(--dim); font-size: 14px; }
-.login-link.small { font-size: 11px; color: rgba(189, 179, 191, 0.55); min-height: 28px; }
 .login-rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .login-rules:empty { display: none; }
 .login-rules li { font-size: 13px; padding: 8px 10px; border-radius: 8px; animation: rise 0.25s ease-out; }
@@ -376,6 +376,10 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .login-perm > p { font-size: 14px; color: rgba(237, 230, 217, 0.85); }
 .login-row { display: flex; gap: 10px; }
 .login-row > * { flex: 1; min-width: 0; }
+.login-row.perm-row { align-items: center; }
+.login-row.perm-row > .login-no { flex: 0 0 auto; }
+.login-no { min-height: 40px; padding: 0 10px; font-size: 12px; color: rgba(189, 179, 191, 0.5); }
+.login-no-row { display: flex; justify-content: flex-end; margin-top: -6px; }
 .login-fine { font-size: 11px; color: rgba(189, 179, 191, 0.55); text-align: center; }
 .login-meter { display: flex; justify-content: space-between; align-items: baseline; }
 .login-meter span { color: var(--dim); font-size: 14px; }

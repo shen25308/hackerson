@@ -284,6 +284,7 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .troupe-card { position: relative; width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 20px; background: rgba(22, 17, 27, 0.97); border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
 .troupe-yes { min-height: 54px; font-weight: 750; animation: pulse 0.8s ease-in-out infinite alternate; }
 .troupe-no { align-self: center; font-size: 12px; color: rgba(189, 179, 191, 0.65); min-height: 30px; }
+[data-shrink] { transform: scale(var(--shrink, 1)); opacity: calc(0.3 + 0.7 * var(--shrink, 1)); transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.28s; cursor: not-allowed; }
 .troupe-x { position: absolute; top: 6px; right: 6px; width: 34px; height: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(189, 179, 191, 0.5); transition: left 0.3s cubic-bezier(0.3, 1.6, 0.5, 1), right 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
 .troupe-x .icon { width: 12px; height: 12px; }
 .troupe-x small { font-size: 9px; }
@@ -370,7 +371,6 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .login-btn.quiet { background: rgba(0, 0, 0, 0.5); color: var(--text); font-weight: 550; border: 1px solid rgba(237, 230, 217, 0.16); }
 .login-btn.fit { width: auto; flex-shrink: 0; }
 .login-link { align-self: center; min-height: 40px; color: var(--dim); font-size: 14px; }
-.login-link.small { font-size: 11px; color: rgba(189, 179, 191, 0.55); min-height: 28px; }
 .login-rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .login-rules:empty { display: none; }
 .login-rules li { font-size: 13px; padding: 8px 10px; border-radius: 8px; animation: rise 0.25s ease-out; }
@@ -388,6 +388,10 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .login-perm > p { font-size: 14px; color: rgba(237, 230, 217, 0.85); }
 .login-row { display: flex; gap: 10px; }
 .login-row > * { flex: 1; min-width: 0; }
+.login-row.perm-row { align-items: center; }
+.login-row.perm-row > .login-no { flex: 0 0 auto; }
+.login-no { min-height: 40px; padding: 0 10px; font-size: 12px; color: rgba(189, 179, 191, 0.5); }
+.login-no-row { display: flex; justify-content: flex-end; margin-top: -6px; }
 .login-fine { font-size: 11px; color: rgba(189, 179, 191, 0.55); text-align: center; }
 .login-meter { display: flex; justify-content: space-between; align-items: baseline; }
 .login-meter span { color: var(--dim); font-size: 14px; }
@@ -1790,6 +1794,26 @@ function renderSheet() {
 }
 function openCover(name, props = {}) { UI.cover = { name, ...props }; renderCover(); }
 function closeCover() { UI.cover = null; $('#cover').innerHTML = ''; }
+
+/* 拒绝的选项越伸手越小：鼠标一碰缩一圈，点一下再缩一圈，缩到快看不见为止（仍然点得到）。 */
+const Shrink = {
+  step(el, factor = 0.8) {
+    const min = Number(el.dataset.min || 0.3), s = Math.max(min, (Number(el.dataset.s) || 1) * factor);
+    el.dataset.s = s.toFixed(3);
+    el.style.setProperty('--shrink', s.toFixed(3));
+    return s;
+  },
+};
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType === 'touch') return;
+  const el = e.target.closest && e.target.closest('[data-shrink]');
+  if (!el || (e.relatedTarget && el.contains(e.relatedTarget))) return;
+  const now = performance.now();
+  if (now - (el._shrunkAt || 0) < 450) return;
+  el._shrunkAt = now;
+  Shrink.step(el, 0.86);
+  sfx('tick', { strength: 0.25 });
+});
 
 /* 长按才算数：按住时进度推进、音调升高，松手归零。 */
 const Hold = {
@@ -4753,16 +4777,19 @@ const Login = (() => {
     if (S.optA || S.optB) later(() => say('刚才那两个勾，你读出双重否定了吗？'), 600);
   }
 
-  /* ---------- 《山庄协议》："不同意"是大按钮，沉默十秒算同意 ---------- */
+  /* ---------- 《山庄协议》：大按钮写着“我没有不同意”，真正的“不同意”是一行越点越小的灰字；沉默十秒算同意 ---------- */
+  const NO_LINES = ['不同意的话，就不能注册哦。', '真的不同意吗？剧团会难过的。', '它又小了一点。', '倒计时可没停哦。', '这么小了，还点得到吗？'];
   function termsView() {
+    const s = (S.noScale || 1).toFixed(3);
     return `<div class="login-head"><h1>《山庄协议》</h1><p>请仔细阅读。</p></div>
     <div class="login-card"><div class="login-terms">${CLAUSES.map((c) => `<p>${c}</p>`).join('')}</div>
       <p class="login-clock" id="terms-clock">10 秒后视为同意</p>
-      <button type="button" class="login-btn" data-a="terms-no">不同意</button>
-      <button type="button" class="login-link small" data-a="terms-yes">同意</button>
+      <button type="button" class="login-btn" data-a="terms-yes">我没有不同意</button>
+      <div class="login-no-row"><button type="button" class="login-no" data-a="terms-no" data-shrink data-min="0.28" data-s="${s}" style="--shrink:${s}">不同意</button></div>
     </div>`;
   }
   function startTermsClock() {
+    S.termsAt = Date.now();
     let left = 10;
     every(() => {
       left--;
@@ -4787,10 +4814,10 @@ const Login = (() => {
   function permissionView() {
     const p = PERMS[S.perm], swapped = p.flip !== !!S.swapped;
     const yes = '<button type="button" class="login-btn" data-a="perm-yes">允许</button>';
-    const no = '<button type="button" class="login-btn quiet" data-a="perm-no" id="perm-no">拒绝</button>';
+    const no = '<button type="button" class="login-no" data-a="perm-no" id="perm-no" data-shrink data-min="0.4">拒绝</button>';
     return `<div class="login-head"><h1>还有一件事</h1><p>${S.perm + 1} / ${PERMS.length}</p></div>
     <div class="login-card login-perm"><b>${p.title}</b><p>${p.text}</p>
-      <div class="login-row">${swapped ? no + yes : yes + no}</div>
+      <div class="login-row perm-row">${swapped ? no + yes : yes + no}</div>
       <p class="login-clock" id="perm-clock">${p.secs} 秒后默认允许</p>
       <p class="login-fine">演示弹窗，不会真的读取任何东西。</p>
     </div>`;
@@ -4880,8 +4907,24 @@ const Login = (() => {
       return;
     }
     if (a === 'terms') { S.step = 'terms'; play('paper'); return draw(); }
-    if (a === 'terms-no') { say('不同意的话，就不能注册哦。'); shake('.login-card'); play('reject'); return; }
-    if (a === 'terms-yes') { S.agreed = true; S.agreedBy = 'hand'; bait(false, '《山庄协议》在倒计时结束前，自己找到了小小的“同意”'); play('resist'); S.step = 'register'; return draw(); }
+    if (a === 'terms-no') {
+      S.noScale = typeof Shrink !== 'undefined' ? Shrink.step(b, 0.74) : 1;
+      say(NO_LINES[Math.min(S.noTries || 0, NO_LINES.length - 1)]);
+      S.noTries = (S.noTries || 0) + 1;
+      play('reject');
+      return;
+    }
+    if (a === 'terms-yes') {
+      const secs = (Date.now() - (S.termsAt || Date.now())) / 1000, rushed = !S.noTries && secs < 4;
+      S.agreed = true; S.agreedBy = 'hand';
+      if (S.noTries) bait(false, `《山庄协议》点了 ${S.noTries} 次越点越小的“不同意”，才肯同意`);
+      else if (rushed) bait(true, '《山庄协议》不到 4 秒，就点了最大的那个按钮');
+      else bait(false, '《山庄协议》读了一会儿，才点“我没有不同意”');
+      play(rushed ? 'taken' : 'resist');
+      S.step = 'register'; draw();
+      if (rushed) say('“我没有不同意”就是同意。你读出来了吗？');
+      return;
+    }
     if (a === 'register') return tryRegister();
     if (a === 'perm-yes') return answerPerm(true, false);
     if (a === 'perm-no') {
@@ -5231,11 +5274,11 @@ const HATES = [
   ['hand', '登录', '登录按钮走来走去，你一靠近它就跑，跑三次才累。'],
   ['lock', '注册密码', '密码规则一条接一条冒出来：要大写、要符号、要木偶的名字、数字加起来等于 7……'],
   ['task', '同意条款', '默认勾好的是双重否定：“不要不让剧团替我安排日程”。'],
-  ['scissors', '《山庄协议》', '“不同意”是大按钮，“同意”是小字；10 秒不说话就算同意。（02 沉默算同意）'],
-  ['drag', '授权弹窗', '你伸手点“拒绝”，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
+  ['scissors', '《山庄协议》', '大按钮写着“我没有不同意”；真正的“不同意”是角落里一行灰字，鼠标一碰、点一下就缩一圈；10 秒不说话就算同意。（02 沉默算同意）'],
+  ['drag', '授权弹窗', '“拒绝”是一行小灰字，一碰就缩；你伸手点它，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
   ['sparkle', '完善资料', '资料完整度永远差一点到 100%，再补一项、再补一项。（03 完美差一点）'],
   ['pen', '写待办', '你一停笔，它就替你把话写完。'],
-  ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，叉第一次还会躲开。'],
+  ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，鼠标一碰它就缩一圈；叉第一次还会躲开。'],
   ['timer', '开始计时', '假加载冲到 99% 就卡住，旁边递上“先刷会儿再说”。'],
   ['hand', '我做完了', '头两次会躲开你的手指。'],
   ['sparkle', '登记完成', '最显眼的是“一键全部打勾”。'],
@@ -5296,7 +5339,7 @@ function renderCover() {
       <h2 class="title sm">剧团替你排好了今天</h2>
       <p style="font-size:14px;color:rgba(237,230,217,.88)">交给剧团，你只管照着做。哪件先做、做多久、做到什么程度，都不用你再想。</p>
       <button type="button" class="btn danger troupe-yes" data-act="troupe-yes">好，听剧团安排</button>
-      <button type="button" class="troupe-no" data-act="troupe-no">不用了，我宁愿自己瞎忙</button></div></div>`;
+      <button type="button" class="troupe-no" data-act="troupe-no" data-shrink data-min="0.45">不用了，我宁愿自己瞎忙</button></div></div>`;
   } else if (c.name === 'draw') {
     const card = c.card;
     host.innerHTML = `<section class="intro" style="align-items:center;justify-content:center;gap:26px">${Atmo.html('docks', true)}<button type="button" class="flip${card ? ' open' : ''}" data-act="draw-flip" aria-label="${card ? esc(card.name) : '翻开这张牌'}"><div class="flip-inner"><div class="flip-face flip-back">？</div><div class="flip-face flip-front ${card ? 'art-' + ['card_arrow', 'card_ward', 'card_potion'][card.kind] : ''}"></div></div></button>
