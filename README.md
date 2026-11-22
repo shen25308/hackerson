@@ -5,6 +5,8 @@
 你在一座夜里的山庄里写下真实的任务、计时、登记完成。界面一路都在引诱你偷懒：替你把话写完、替你排日程、把"一键全部打勾"做成最大的按钮、倒计时一到就替你同意。
 你每一次亲手拦下或被它带走都会记一笔，首页的 **人类含量** 就是你这一天里亲手做决定的比例。
 
+**在线试玩：https://shen25308.github.io/hackerson/** （建议用电脑浏览器全屏打开）
+
 整个应用就是这一个文件：[`index.html`](index.html)。不用安装，不用联网，浏览器打开就能用。
 
 ---
@@ -25,10 +27,14 @@ git clone https://github.com/shen25308/hackerson.git
 
 然后双击文件夹里的 `index.html`。
 
-**方法三：开一个在线链接（可选）**
+**方法三：直接用在线链接**
 
-在仓库的 **Settings → Pages** 里，Source 选 **Deploy from a branch**，分支选 `main`、目录选 `/ (root)`，保存。
-一两分钟后就能用 `https://shen25308.github.io/hackerson/` 打开，方便发给评委。（仓库需要是公开的；私有仓库要看账号套餐是否支持 Pages。）
+https://shen25308.github.io/hackerson/ ，由 GitHub Pages 从 `gh-pages` 分支发布，内容和 `main` 一样。
+更新 `main` 之后，运行下面这句把线上版本也更新（一两分钟后生效）：
+
+```bash
+git push origin main:gh-pages
+```
 
 ### 打开前的建议
 
