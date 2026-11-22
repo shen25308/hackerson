@@ -458,61 +458,13 @@ setInterval(() => {
 window.addEventListener('resize', () => { if (UI.tab === 'village') Village.layout(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
-/* ---------- 开场加载：一路冲到 99%，然后卡住；越催越慢 ---------- */
-function bootLoading(done) {
-  if (window.HC_SKIP_LOADING || !Store.mischief) { done(); return; }
-  const host = document.createElement('div');
-  host.className = 'boot';
-  host.id = 'boot';
-  host.innerHTML = `${Atmo.html('street', true)}<div class="boot-body"><div class="boot-head"><b>人类含量</b><span>夜巡山庄</span></div>
-    <div class="boot-meter"><i id="boot-bar"></i></div><div class="boot-row"><span id="boot-cap">正在点亮山庄的灯…</span><b id="boot-pct">0%</b></div></div>`;
-  ($('#shell') || document.body).appendChild(host);
-  const RUN = 1.8, STUCK_MS = 4500, CAPS = [[0, '正在点亮山庄的灯…'], [34, '正在叫醒木偶…'], [68, '正在替你安排好今天…']];
-  const STUCK = ['马上就好…', '就差一点点了。', '再等一下下。', '99% 也算快好了吧。', '网没问题，是你太急了。'];
-  const start = performance.now();
-  let stuckAt = 0, extra = 0, nags = 0, dip = 0, ended = false;
-  const bar = $('#boot-bar', host), pct = $('#boot-pct', host), cap = $('#boot-cap', host);
-  const nag = () => {
-    if (!stuckAt || ended) return;
-    nags++;
-    if (nags === 1) Store.logBait(true, '开场加载卡在 99%，忍不住催了它');
-    if (nags <= 3) extra += 1200;
-    dip = performance.now();
-    cap.textContent = ['别催，越催越慢。', '你看，又退回去了。', '再催就从头来了。（骗你的）'][Math.min(nags, 3) - 1];
-    sfx('error', { strength: 0.5 });
-  };
-  host.addEventListener('pointerdown', nag);
-  window.addEventListener('keydown', nag);
-  const frame = (now) => {
-    if (ended) return;
-    const t = (now - start) / 1000;
-    let p = Math.min(99, Math.floor((t / RUN) * 99));
-    if (p >= 99 && !stuckAt) stuckAt = now;
-    if (stuckAt) {
-      const held = now - stuckAt;
-      if (dip && now - dip < 900) p = 98;
-      else if (!dip || now - dip > 1600) cap.textContent = STUCK[Math.floor(held / 1100) % STUCK.length];
-      if (held >= STUCK_MS + extra) {
-        ended = true;
-        bar.style.width = '100%'; pct.textContent = '100%'; cap.textContent = '好了。欢迎来到夜巡山庄。';
-        window.removeEventListener('keydown', nag);
-        setTimeout(() => { host.classList.add('out'); setTimeout(() => { host.remove(); done(); }, 380); }, 420);
-        return;
-      }
-    } else {
-      cap.textContent = CAPS.filter(([at]) => p >= at).pop()[1];
-    }
-    bar.style.width = p + '%'; pct.textContent = p + '%';
-    requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
-}
-
-/* ---------- 进门：先加载，再登录，再看开场 ---------- */
-function startDoor(withLoading) {
+/* ---------- 进门：开幕 → 推门入座 → 登录 → 入座大厅 → 开始今夜 → 开场引导 ---------- */
+function startDoor(withCeremony) {
   const afterLogin = () => { render(); if (!UI.prefs.onboarded) openCover('intro', { page: 0 }); };
-  const door = () => { if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin }); else afterLogin(); };
-  if (withLoading) bootLoading(door); else door();
+  const ceremony = withCeremony && window.Ceremony && !window.HC_SKIP_LOADING;
+  const seated = () => (ceremony ? Ceremony.lobby(afterLogin) : afterLogin());
+  const door = () => { if (window.Login && !Login.signedIn()) Login.open({ onDone: seated }); else seated(); };
+  if (ceremony) Ceremony.loader(door); else door();
 }
 
 /* ---------- 启动 ---------- */
