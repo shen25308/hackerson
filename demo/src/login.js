@@ -1,7 +1,7 @@
 'use strict';
 /* 登录与注册：一进门就让你领教这座山庄的界面有多讨厌。
    · 登录按钮走来走去，你一靠近它就跑
-   · 注册的密码规则一条接一条冒出来；不能粘贴，“显示”只给看一秒，第一次设好的密码“已经有人在用”
+   · 注册的密码规则一条接一条冒出来；不能粘贴，“显示”只给看一秒，要输两遍
    · 同意条款用双重否定，"同意"和"不同意"的按钮反着放，沉默十秒算同意
    · 授权弹窗的"允许"和"拒绝"会换位，倒计时结束默认允许
    · 资料完整度永远差一点到 100%
@@ -12,7 +12,6 @@ const Login = (() => {
   /* 密码框里浏览器会关掉中文输入法，所以木偶名用拼音首字母（大写），星期几用英文缩写。 */
   const INITIALS = ['SMR', 'YS', 'XJR', 'QS', 'ZMR', 'SSMO', 'HM', 'DGZ', 'MGFR'];
   const REVERSED = INITIALS.map((n) => [...n].reverse().join(''));
-  const USED_BY = ['玫瑰夫人', '戴冠者', '灰毛', '双生木偶'];
   const isPrime = (n) => { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; };
   const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
   const RULES = [
@@ -70,7 +69,7 @@ const Login = (() => {
   function open(opts = {}) {
     if (root) return false;
     onDone = opts.onDone || null;
-    S = { step: 'login', name: '', pass: '', pass2: '', used: [], usedBy: '', peeks: 0, hint: '', show: false, escapes: 0, tired: false,
+    S = { step: 'login', name: '', pass: '', pass2: '', peeks: 0, hint: '', show: false, escapes: 0, tired: false,
       optA: true, optB: true, agreed: false, agreedBy: '', perm: 0, profile: {}, filled: 0, pIndex: 0, caption: '' };
     root = document.createElement('div');
     root.className = 'login';
@@ -232,7 +231,6 @@ const Login = (() => {
       shown.push(`<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'} ${typeof r.t === 'function' ? r.t(p) : r.t}</li>`);
       if (!ok) { all = false; break; }
     }
-    if (all && S.used.length) { const fresh = !S.used.includes(p); shown.push(`<li class="${fresh ? 'ok' : 'no'}">${fresh ? '✓' : '✗'} 不能和别人在用的密码一样（刚才那个，${S.usedBy}在用）</li>`); }
     if (!p) shown.length = 0;
     const wrap = $('#reg-pass2-wrap');
     if (wrap) wrap.hidden = !passOK();
@@ -241,20 +239,13 @@ const Login = (() => {
     S.lastRules = count;
     ul.innerHTML = shown.join('');
   }
-  const passOK = () => RULES.every((r) => r.ok(S.pass)) && !S.used.includes(S.pass);
+  const passOK = () => RULES.every((r) => r.ok(S.pass));
   function tryRegister() {
     const name = S.name.trim();
     if (!name) { say('先给自己起个名字。'); shake('#reg-name'); play('error'); return; }
     if (!passOK()) { say('密码还不够好。看看下面的提示。'); shake('#reg-rules'); play('error'); return; }
     if (S.pass2 !== S.pass) { say(S.pass2 ? '两次输的不一样。' : '再输一遍密码。'); shake('#reg-pass2-wrap'); play('error'); return; }
     if (!S.agreed) { say('要先同意《山庄协议》。'); shake('.login-checks'); play('error'); return; }
-    if (!S.used.length) {
-      S.used.push(S.pass); S.usedBy = USED_BY[Math.floor(Math.random() * USED_BY.length)]; S.pass2 = '';
-      const c = $('#reg-pass2'); if (c) c.value = '';
-      paintRules();
-      say(`这个密码，${S.usedBy}已经在用了。换一个吧。`); shake('#reg-rules'); play('error');
-      return;
-    }
     saveAccount({ name, pass: hash(S.pass), hint: S.hint.trim(), at: Date.now(), signedIn: false });
     bait(S.optA, S.optA ? '注册时，没看出“不要不让剧团替我安排日程”是双重否定' : '注册时，取消了“不要不让剧团替我安排日程”');
     bait(S.optB, S.optB ? '注册时，留着“我不拒绝每天接收 3 次推送”没取消' : '注册时，取消了“我不拒绝每天接收 3 次推送”');
