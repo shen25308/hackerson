@@ -7,7 +7,7 @@ enum Theme {
     static let raised = Color(red: 0.133, green: 0.106, blue: 0.157)
     static let hairline = Color.white.opacity(0.09)
     static let text = Color(red: 0.93, green: 0.9, blue: 0.85)
-    static let dim = Color(red: 0.66, green: 0.62, blue: 0.68)
+    static let dim = Color(red: 0.74, green: 0.7, blue: 0.75)
     static let paper = Color(red: 0.937, green: 0.9, blue: 0.82)
     static let paperShade = Color(red: 0.86, green: 0.81, blue: 0.71)
     static let ink = Color(red: 0.13, green: 0.1, blue: 0.14)

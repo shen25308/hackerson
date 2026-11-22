@@ -23,6 +23,15 @@ enum Backdrop {
         }
     }
 
+    /// 原画偏暗的场景提亮一点。
+    var lift: Double {
+        switch self {
+        case .street: return 0.08
+        case .square: return 0.04
+        default: return 0
+        }
+    }
+
     /// 灯火在屏幕上的位置。
     var glow: UnitPoint {
         switch self {
@@ -59,7 +68,7 @@ struct Atmosphere: View {
                     .resizable(resizingMode: .tile)
                     .blendMode(.overlay)
                     .opacity(0.22)
-                RadialGradient(colors: [.clear, .black.opacity(0.72)], center: .center,
+                RadialGradient(colors: [.clear, .black.opacity(0.62)], center: .center,
                                startRadius: size.width * 0.3, endRadius: size.height * 0.72)
             }
             .frame(width: size.width, height: size.height)
@@ -84,18 +93,19 @@ struct Atmosphere: View {
         return Image(backdrop.art)
             .resizable()
             .frame(width: width, height: height)
-            .saturation(0.7)
+            .saturation(0.74)
             .contrast(1.1)
+            .brightness(backdrop.lift)
             .offset(x: x + (drift ? -slack : slack), y: -size.height * 0.04)
             .frame(width: size.width, height: size.height, alignment: .topLeading)
     }
 
     private var scrim: some View {
         LinearGradient(stops: [
-            .init(color: .black.opacity(quiet ? 0.62 : 0.3), location: 0),
-            .init(color: .black.opacity(quiet ? 0.8 : 0.58), location: 0.3),
-            .init(color: .black.opacity(quiet ? 0.9 : 0.82), location: 0.66),
-            .init(color: .black.opacity(0.95), location: 1),
+            .init(color: .black.opacity(quiet ? 0.5 : 0.18), location: 0),
+            .init(color: .black.opacity(quiet ? 0.7 : 0.44), location: 0.3),
+            .init(color: .black.opacity(quiet ? 0.86 : 0.72), location: 0.66),
+            .init(color: .black.opacity(quiet ? 0.95 : 0.9), location: 1),
         ], startPoint: .top, endPoint: .bottom)
     }
 
@@ -105,7 +115,7 @@ struct Atmosphere: View {
             let t = context.date.timeIntervalSinceReferenceDate
             let n = reduceMotion ? 0 : sin(t * 7.3) * 0.5 + sin(t * 13.1) * 0.3 + sin(t * 2.1) * 0.2
             Circle()
-                .fill(RadialGradient(colors: [Theme.ember.opacity(0.26 + 0.1 * n), .clear], center: .center, startRadius: 0, endRadius: 170))
+                .fill(RadialGradient(colors: [Theme.ember.opacity(0.34 + 0.12 * n), .clear], center: .center, startRadius: 0, endRadius: 170))
                 .frame(width: 340, height: 340)
                 .position(x: backdrop.glow.x * size.width, y: backdrop.glow.y * size.height)
                 .blendMode(.screen)
