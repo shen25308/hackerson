@@ -26,7 +26,7 @@ enum Screenshots {
         case "labmenu": stage.sheet = .labMenu
         case "district-decisions", "district-mirror", "district-experiment":
             stage.sheet = .district(String(scene.dropFirst(9)))
-        case "tasks", "add", "empty": stage.tab = .tasks
+        case "tasks", "add", "empty", "troupe": stage.tab = .tasks
         case "detail", "complete":
             if let first { stage.openTask(first.id) }
         case "settle": stage.openSettle()
