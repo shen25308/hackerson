@@ -61,9 +61,7 @@ h1, h2, h3, p { margin: 0; }
   background: var(--night);
   isolation: isolate;
 }
-@media (min-width: 520px) and (min-height: 700px) {
-  #shell { border-radius: 30px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.8); }
-}
+.side-brand, .side-foot { display: none; }
 #view, .screen { position: absolute; inset: 0; }
 .scroll {
   position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
@@ -351,6 +349,132 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
   .atmo-eyes { display: none; }
   .sheet-panel, .place-card, #toast, .flash-box { animation-duration: 0.01s; }
 }
+
+/* ---------- 登录与注册 ---------- */
+.login { position: absolute; inset: 0; z-index: 64; overflow: hidden; background: var(--night); }
+.login-body { position: absolute; inset: 0; z-index: 1; overflow-y: auto; overscroll-behavior: contain; padding: calc(26px + env(safe-area-inset-top, 0px)) var(--gutter-r) 110px var(--gutter-l); display: flex; flex-direction: column; gap: 18px; scrollbar-width: none; }
+.login-body::-webkit-scrollbar { display: none; }
+.login-head h1 { font: 900 34px/1.2 var(--display); text-shadow: 0 2px 14px #000; }
+.login-head p { color: var(--dim); font-size: 14px; margin-top: 4px; }
+.login-card { display: flex; flex-direction: column; gap: 14px; padding: 18px 16px; border-radius: 18px; background: rgba(8, 6, 11, 0.62); border: 1px solid rgba(255, 255, 255, 0.08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.login-field { display: flex; flex-direction: column; gap: 7px; }
+.login-field > span:first-child { font-size: 14px; font-weight: 550; color: var(--dim); }
+.login-field input, .login-input { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.13); color: var(--text); caret-color: var(--ember); font-size: 15px; min-width: 0; }
+.login-field input:focus, .login-input:focus { outline: 1px solid var(--ember); }
+.login-pass { display: flex; gap: 8px; }
+.login-pass button { flex-shrink: 0; padding: 0 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); color: var(--dim); font-size: 13px; min-height: 44px; }
+.login-zone { position: relative; height: 170px; border-radius: 14px; border: 1px dashed rgba(237, 230, 217, 0.14); overflow: hidden; touch-action: none; }
+.login-go { position: absolute; left: 0; top: 0; width: 120px; min-height: 50px; border-radius: 12px; background: var(--ember); color: var(--ink); font-weight: 700; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5); }
+.login-go.tired { background: var(--paper); }
+.login-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; padding: 0 16px; border-radius: 12px; background: var(--ember); color: var(--ink); font-weight: 700; }
+.login-btn.quiet { background: rgba(0, 0, 0, 0.5); color: var(--text); font-weight: 550; border: 1px solid rgba(237, 230, 217, 0.16); }
+.login-btn.fit { width: auto; flex-shrink: 0; }
+.login-link { align-self: center; min-height: 40px; color: var(--dim); font-size: 14px; }
+.login-link.small { font-size: 11px; color: rgba(189, 179, 191, 0.55); min-height: 28px; }
+.login-rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.login-rules:empty { display: none; }
+.login-rules li { font-size: 13px; padding: 8px 10px; border-radius: 8px; animation: rise 0.25s ease-out; }
+.login-rules li.no { background: rgba(204, 77, 115, 0.16); color: #f08aa8; }
+.login-rules li.ok { background: rgba(133, 168, 112, 0.14); color: var(--moss); }
+.login-checks { display: flex; flex-direction: column; gap: 4px; }
+.login-check { display: flex; align-items: flex-start; gap: 10px; min-height: 40px; padding: 6px 2px; cursor: pointer; font-size: 13.5px; line-height: 1.5; }
+.login-check i { flex-shrink: 0; width: 20px; height: 20px; margin-top: 1px; border-radius: 5px; border: 1.6px solid rgba(237, 230, 217, 0.45); display: grid; place-items: center; }
+.login-check.on i { background: var(--ember); border-color: var(--ember); }
+.login-check.on i::after { content: "✓"; color: var(--ink); font-size: 13px; font-weight: 800; font-style: normal; }
+.login-inline { color: var(--ember); font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.login-terms { max-height: 230px; overflow-y: auto; padding: 12px; border-radius: 10px; background: var(--paper); color: var(--ink); display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+.login-clock { font-size: 14px; font-weight: 650; color: var(--rose); text-align: center; }
+.login-perm b { font: 700 19px/1.4 var(--display); }
+.login-perm > p { font-size: 14px; color: rgba(237, 230, 217, 0.85); }
+.login-row { display: flex; gap: 10px; }
+.login-row > * { flex: 1; min-width: 0; }
+.login-fine { font-size: 11px; color: rgba(189, 179, 191, 0.55); text-align: center; }
+.login-meter { display: flex; justify-content: space-between; align-items: baseline; }
+.login-meter span { color: var(--dim); font-size: 14px; }
+.login-meter b { font: 900 30px/1 var(--display); color: var(--ember); font-variant-numeric: tabular-nums; }
+.login-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.login-bar i { display: block; height: 100%; background: var(--ember); border-radius: 99px; transition: width 0.5s ease-out; }
+.login-almost { color: var(--rose); font-size: 14px; font-weight: 650; }
+.login-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.login-chips button { min-height: 40px; padding: 0 14px; border-radius: 99px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(237, 230, 217, 0.18); font-size: 14px; }
+.login-cap { position: absolute; left: var(--gutter-l); right: var(--gutter-r); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 2; margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--paper); color: var(--ink); font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.login-cap.on { opacity: 1; animation: rise 0.25s ease-out; }
+.login-shake { animation: shake 0.4s; }
+
+
+/* ================= 电脑大屏 =================
+   布局：左侧一条导航栏，右边是满幅的场景；文字内容收在居中的一栏里，弹出面板变成居中的对话框。 */
+@media (min-width: 900px) {
+  :root { --side: 236px; --col: 820px; }
+  body { font-size: 16px; }
+  #shell { max-width: none; max-height: none; width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+  #view { left: var(--side); }
+  .scroll { padding: 44px max(48px, calc((100% - var(--col)) / 2)) 120px; gap: 22px; }
+  .title { font-size: 38px; }
+  .title.sm { font-size: 30px; }
+
+  /* 左侧导航 */
+  #tabbar { left: 0; right: auto; top: 0; bottom: 0; width: var(--side); flex-direction: column; gap: 6px; padding: 28px 16px 22px; border-radius: 0; border: 0; border-right: 1px solid rgba(255, 255, 255, 0.08); background: rgba(10, 7, 13, 0.94); box-shadow: none; }
+  #tabbar > button { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; font-size: 15px; }
+  #tabbar > button .icon { width: 20px; height: 20px; }
+  #tabbar > button:hover:not(.on) { background: rgba(255, 255, 255, 0.05); }
+  #tabbar .badge { position: static; margin-left: auto; }
+  .side-brand { display: flex; flex-direction: column; gap: 2px; padding: 0 14px 22px; }
+  .side-brand b { font: 900 28px/1.2 var(--display); }
+  .side-brand span { font-size: 12px; color: var(--dim); letter-spacing: 0.1em; }
+  .side-foot { display: flex; flex-direction: column; gap: 14px; margin-top: auto; padding: 16px 14px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+  .side-hc { display: flex; align-items: baseline; gap: 10px; text-align: left; }
+  .side-hc b { font: 900 30px/1 var(--display); }
+  .side-hc span { font-size: 13px; color: var(--dim); }
+  .side-role { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .side-role small { font-size: 12px; color: var(--dim); }
+  .side-tools { display: flex; gap: 8px; }
+
+  /* 计时条、提示、大字 */
+  #dock { left: calc(var(--side) + 24px); right: 24px; bottom: 24px; align-items: flex-end; }
+  .focus-dock { width: 400px; }
+  #toast { left: var(--side); right: 0; margin: 0 auto; width: fit-content; max-width: 520px; bottom: 30px; }
+  #flash { left: var(--side); }
+
+  /* 弹出面板：居中的对话框 */
+  .sheet-panel, .sheet-panel.half { left: 50%; right: auto; top: 50%; bottom: auto; width: min(640px, 92%); height: min(86%, 860px); max-height: none; border-radius: 20px; transform: translate(-50%, -50%); animation: modal-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); }
+  .sheet-panel.half { height: auto; max-height: 86%; }
+  .sheet-head::before { display: none; }
+  .sheet-head { padding-top: 18px; }
+  .sheet-body { padding-left: 28px; padding-right: 28px; }
+  .sheet-foot { padding-left: 28px; padding-right: 28px; }
+
+  /* 山庄：满幅全景，底部的说明卡不铺满 */
+  .place-card { max-width: 560px; }
+  .village-bottom { bottom: 32px; }
+  .hud { padding: 22px 32px 0; }
+  .hud .round { display: none; }
+
+  /* 整屏的页面：内容收在中间 */
+  .intro { padding-left: max(32px, calc((100% - 600px) / 2)); padding-right: max(32px, calc((100% - 600px) / 2)); }
+  .intro .words h1 { font-size: 52px; }
+  .intro .words p { font-size: 21px; }
+  .troupe-card { max-width: 460px; }
+  .login-body { padding-left: max(32px, calc((100% - 480px) / 2)); padding-right: max(32px, calc((100% - 480px) / 2)); padding-top: 64px; }
+  .login-head h1 { font-size: 46px; }
+  .login-body { padding-bottom: 96px; }
+  .login-body > :first-child { margin-top: auto; }
+  .login-body > :last-child { margin-bottom: auto; }
+  .login-card { padding: 24px 26px; gap: 16px; }
+  .login-zone { height: 200px; }
+  .login-go:hover { filter: brightness(1.08); }
+  .login-terms { max-height: 300px; font-size: 14.5px; }
+  .login-cap { left: 50%; right: auto; width: min(480px, 90%); transform: translateX(-50%); bottom: 36px; }
+  .lab { padding-left: max(0px, calc((100% - 880px) / 2)); padding-right: max(0px, calc((100% - 880px) / 2)); }
+  .fate { padding-left: max(0px, calc((100% - 860px) / 2)); padding-right: max(0px, calc((100% - 860px) / 2)); }
+  .hud-role, .hud-hc, .hud .demo-pill, #dock .demo-pill { display: none; }
+  .side-demo { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: rgba(227, 143, 64, 0.14); border: 1px solid rgba(227, 143, 64, 0.35); font-size: 12.5px; color: var(--ember); }
+  .side-demo button { align-self: flex-start; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  .sheet-panel:not(.half) { width: min(720px, 92%); }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .cards .art { height: 170px; }
+}
+@keyframes modal-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); } }
 
 /* 木偶剧场 · 反向体验。所有选择器都以 .lab 开头；颜色只用宿主页面的色板变量。
    火光色（--ember）是玩家自己的动作，玫瑰色（--rose）是界面在使坏。 */
@@ -770,6 +894,29 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
   .fate-opt, .fate-verdict { animation: none; }
 }
 
+/* 电脑大屏：十个座位排成一排，牌面放大，旁白和选项收在中间 */
+@media (min-width: 900px) {
+  .fate-top { padding: 28px 0 12px; }
+  .fate-top-l b { font-size: 32px; }
+  .fate-top-l span, .fate-top-r span { font-size: 14px; }
+  .fate-seats { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 12px 10px; padding: 16px 0 20px; }
+  .fate-face { width: 66px; height: 80px; border-radius: 8px; }
+  .fate-back::after { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+  .fate-seat b { font-size: 13.5px; }
+  .fate-stage { padding: 20px 40px 28px; }
+  .fate-narr { font-size: 20px; line-height: 2; }
+  .fate-ask { font-size: 19px; margin-top: 20px; }
+  .fate-opts, .fate-stage > .fate-btn { align-self: center; width: min(660px, 100%); }
+  .fate-opts { margin-top: 22px; gap: 12px; }
+  .fate-opt { padding: 16px 18px; }
+  .fate-opt:hover { border-color: rgba(227, 143, 64, 0.5) !important; }
+  .fate-opt-t { font-size: 16.5px; }
+  .fate-dials { gap: 10px 28px; padding-bottom: 26px; }
+  .fate-dial i { font-size: 13px; }
+  .fate-dial em { width: 64px; }
+  .fate-verdict { padding: 44px max(28px, calc((100% - 720px) / 2)) 44px; }
+}
+
 </style>
 <div id="shell">
   <div id="view"></div>
@@ -941,8 +1088,8 @@ const Atlas = {
   panorama: [0, 2, 1, 3],
   places: [
     { id: 'board', name: '任务板', feature: '今天要做的事', need: 0, scene: 0, x: 0.2, y: 0.62 },
-    { id: 'theater', name: '木偶剧场', feature: '反向体验 · 前三幕', need: 0, scene: 0, x: 0.8, y: 0.5 },
-    { id: 'backstage', name: '剧场后台', feature: '反向体验 · 后三幕', need: 2, scene: 0, x: 0.5, y: 0.62 },
+    { id: 'theater', name: '木偶剧场', feature: '反向体验 · 前五幕', need: 0, scene: 0, x: 0.8, y: 0.5 },
+    { id: 'backstage', name: '剧场后台', feature: '反向体验 · 最后一幕', need: 2, scene: 0, x: 0.5, y: 0.62 },
     { id: 'fire', name: '火堆', feature: '四夜之约 · 字条议事', need: 0, scene: 1, x: 0.5, y: 0.68 },
     { id: 'tower', name: '钟楼', feature: '行为回声', need: 0, scene: 1, x: 0.4, y: 0.3 },
     { id: 'decisions', name: '观星台', feature: '决策档案 · 夜谈第二手', need: 1, scene: 2, x: 0.36, y: 0.27 },
@@ -1587,7 +1734,7 @@ function offerTroupe() {
   if (!Store.mischief || Store.closed || !Store.today.tasks.length || UI.prefs.troupeDay === today || UI.troupeTimer) return;
   UI.troupeTimer = setTimeout(() => {
     UI.troupeTimer = 0;
-    if (UI.tab !== 'tasks' || UI.route || UI.sheet || UI.cover || (window.Lab && Lab.isOpen()) || UI.prefs.troupeDay === today) return;
+    if (UI.tab !== 'tasks' || UI.route || UI.sheet || UI.cover || (window.Lab && Lab.isOpen()) || (window.Login && Login.isOpen()) || UI.prefs.troupeDay === today) return;
     UI.prefs.troupeDay = today; UI.save();
     sfx('tempt');
     openCover('troupe', { moved: false });
@@ -1596,7 +1743,12 @@ function offerTroupe() {
 
 function renderChrome() {
   const tabs = [['village', 'home', '山庄'], ['tasks', 'task', '待办'], ['council', 'council', '议事'], ['puppets', 'mask', '木偶'], ['echo', 'wave', '回声']];
-  $('#tabbar').innerHTML = tabs.map(([id, ic, name]) => `<button type="button" data-act="tab" data-tab="${id}" class="${UI.tab === id ? 'on' : ''}"${UI.tab === id ? ' aria-current="page"' : ''}>${icon(ic)}<span>${name}</span>${id === 'tasks' && Store.pending ? `<i class="badge">${Store.pending}</i>` : ''}</button>`).join('');
+  const navHTML = tabs.map(([id, ic, name]) => `<button type="button" data-act="tab" data-tab="${id}" class="${UI.tab === id ? 'on' : ''}"${UI.tab === id ? ' aria-current="page"' : ''}>${icon(ic)}<span>${name}</span>${id === 'tasks' && Store.pending ? `<i class="badge">${Store.pending}</i>` : ''}</button>`).join('');
+  const hc = Rules.humanContent(Store.s), acc = window.Login && Login.account();
+  $('#tabbar').innerHTML = `<div class="side-brand"><b>人类含量</b><span>夜巡山庄${acc && acc.name ? ' · ' + esc(acc.name) : ''}</span></div>${navHTML}
+  <div class="side-foot">${Store.demo ? '<div class="side-demo"><span>示例中，不写入你的档案</span><button type="button" data-act="exit-demo">退出示例</button></div>' : ''}<button type="button" class="side-hc" data-act="tab" data-tab="echo"><b class="${hc.percent >= 60 ? 'ember' : 'rose'}">${hc.percent}%</b><span>人类含量</span></button>
+  <div class="side-role"><span>${Store.role.name} · Lv.${Store.level}</span>${meter(Store.hp / 100, 'rose')}<small>生命 ${Store.hp} · 经验 ${Store.xp}</small></div>
+  <div class="side-tools"><button type="button" class="round" data-act="sheet" data-sheet="sound" aria-label="声音">${icon('sound')}</button><button type="button" class="round" data-act="sheet" data-sheet="help" aria-label="设置与玩法">${icon('gear')}</button></div></div>`;
   renderDock();
 }
 function renderDock() {
@@ -1779,7 +1931,7 @@ const Village = {
     if (!Store.isOpen(id)) return { title: place.name, hint: '雾还没散', text: `${place.feature}。再整件做完 ${place.need - Store.gateCount} 项任务，这里开门。`, button: '去任务板拿钥匙', locked: true };
     const texts = {
       board: [Store.closed ? '今天已经收工，记录还在。' : Store.today.tasks.length ? `今天还有 ${Store.pending} 项待办。` : '先写下一件今天能做完的事。', '看今日待办'],
-      theater: ['抢写、追着你跑的按钮、换位的选项。亲手试一次界面怎么抢走你的决定。', '进剧场'], backstage: ['后三幕：像素、反驳、第 N 次。', '去后台'],
+      theater: ['抢写、追着你跑的按钮、换位的选项。亲手试一次界面怎么抢走你的决定。', '进剧场'], backstage: ['最后一幕：第 N 次。', '去后台'],
       fire: ['十个人围着火堆坐好了。四夜之约、三张字条和五席夜谈都在这里。', '坐到火堆旁'], tower: [`已经整件做完 ${Store.completed} 项。回看任务、选票和用时。`, '翻开行为回声'],
       decisions: ['回看你采用过的策略和投过的票。', '上观星台'], mirror: ['把现实里的行动和桌上的决定并排放。', '走进回声廊'],
       ferry: ['建一个房间邀朋友，或输入六位房间码入座。', '去渡口'], experiment: ['写下一个假设，下次留下可以核对的记录。', '到镜湖边'],
@@ -2187,7 +2339,7 @@ Object.assign(ACT, {
   const ALT = '先不做，等 AI 再成熟一点';
   const ORDER = ['prologue', 'feed', 'wait', 'pixel', 'argue', 'retry', 'archive'];
   const KEYS = ORDER.slice(0, 6);
-  const BACKSTAGE = ['pixel', 'argue', 'retry'];
+  const BACKSTAGE = ['retry'];
   const NAME = { prologue: '抢写补全', feed: '收藏夹', wait: '等待', pixel: '像素', argue: '反驳', retry: '第 N 次', archive: '记录' };
   const ACT = (k) => (k === 'prologue' ? '序幕' : k === 'archive' ? '终幕' : `第 ${KEYS.indexOf(k)} 幕`);
   const LABEL = (k) => `${ACT(k)} · ${NAME[k]}`;
@@ -4356,6 +4508,407 @@ Object.assign(ACT, {
 </script>
 <script>
 'use strict';
+/* 登录与注册：一进门就让你领教这座山庄的界面有多讨厌。
+   · 登录按钮走来走去，你一靠近它就跑
+   · 注册的密码规则一条接一条冒出来
+   · 同意条款用双重否定，"同意"和"不同意"的按钮反着放，沉默十秒算同意
+   · 授权弹窗的"允许"和"拒绝"会换位，倒计时结束默认允许
+   · 资料完整度永远差一点到 100%
+   账号只存在这台设备上，演示用。 */
+const Login = (() => {
+  const KEY = 'human-content-demo-account-v1';
+  const PUPPET_NAMES = ['守门人', '药师', '寻迹人', '琴师', '织梦人', '双生木偶', '灰毛', '戴冠者', '玫瑰夫人'];
+  const WEEK = '周' + '日一二三四五六'[new Date().getDay()];
+  const RULES = [
+    { t: '至少 8 个字符', ok: (p) => [...p].length >= 8 },
+    { t: '要有一个数字', ok: (p) => /\d/.test(p) },
+    { t: '要有一个大写字母', ok: (p) => /[A-Z]/.test(p) },
+    { t: '要有一个符号，比如 ! 或 #', ok: (p) => /[!-/:-@[-`{-~！？。，、；：]/.test(p) },
+    { t: '要包含一位木偶的名字（守门人、药师、琴师……）', ok: (p) => PUPPET_NAMES.some((n) => p.includes(n)) },
+    { t: '所有数字加起来要等于 7', ok: (p) => (p.match(/\d/g) || []).reduce((n, d) => n + Number(d), 0) === 7 },
+    { t: '要写上今天是星期几（写成“周一”这样）', ok: (p) => p.includes(WEEK) },
+  ];
+  const CLAUSES = [
+    '第一条　你在山庄里做的每一个决定，剧团都有权替你再做一次。',
+    '第二条　你没有明确说“不”的事，一律视为“好”。',
+    '第三条　剧团可以在任何时候调整你的日程，调整前会尽量不通知你。',
+    '第四条　你收藏过的内容，剧团会继续推荐给你，直到你忘了自己本来想做什么。',
+    '第五条　本协议的解释权、修改权和再次修改权，归剧团所有。',
+    '第六条　读到这里的人不多。你可以点下面那个大按钮了。',
+  ];
+  const PROFILE = [
+    { key: 'look', label: '选一个头像风格', chips: ['提线木偶', '纸面具', '烛光剪影'] },
+    { key: 'birth', label: '你的生日', placeholder: '比如 3 月 14 日' },
+    { key: 'wake', label: '理想的起床时间', chips: ['6:00', '7:30', '能睡就睡'] },
+    { key: 'puppet', label: '最喜欢的木偶', chips: ['守门人', '药师', '琴师', '玫瑰夫人'] },
+    { key: 'motto', label: '一句座右铭', placeholder: '比如：先做一小步' },
+    { key: 'blood', label: '血型', chips: ['A', 'B', 'O', 'AB', '不知道'] },
+    { key: 'color', label: '幸运色', chips: ['烛火橙', '夜紫', '雾灰'] },
+    { key: 'pet', label: '小时候养过的宠物', placeholder: '没养过也可以写想养的' },
+  ];
+  const PCTS = [82, 91, 95, 97, 98, 99, 99.5, 99.7, 99.8, 99.9];
+
+  let root = null, S = null, timers = [], onDone = null;
+  const $ = (sel) => (root ? root.querySelector(sel) : null);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const play = (n, o) => { if (typeof sfx === 'function') sfx(n, o); };
+  const bait = (taken, text) => { if (typeof Store !== 'undefined' && Store.logBait) Store.logBait(taken, text); };
+  const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
+  const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
+  const clearTimers = () => { timers.forEach((t) => { clearTimeout(t); clearInterval(t); }); timers = []; };
+
+  function hash(s) {
+    let h = 2166136261;
+    for (const ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36);
+  }
+  function account() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+  function saveAccount(a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} }
+  /* 退出登录只退出，账号还在；清空记录才把账号删掉。 */
+  function signedIn() { const a = account(); return !!a && a.signedIn !== false; }
+  function signOut() { const a = account(); if (a) { a.signedIn = false; saveAccount(a); } }
+  function forget() { try { localStorage.removeItem(KEY); } catch (e) {} }
+
+  /* ---------- 外壳 ---------- */
+  function open(opts = {}) {
+    if (root) return false;
+    onDone = opts.onDone || null;
+    S = { step: 'login', name: '', pass: '', hint: '', show: false, escapes: 0, tired: false,
+      optA: true, optB: true, agreed: false, agreedBy: '', perm: 0, profile: {}, filled: 0, pIndex: 0, caption: '' };
+    root = document.createElement('div');
+    root.className = 'login';
+    root.id = 'login-root';
+    root.innerHTML = (window.Atmo ? Atmo.html('street', true) : '') + '<div class="login-body" id="login-body"></div><p class="login-cap" id="login-cap" aria-live="polite"></p>';
+    (document.getElementById('shell') || document.body).appendChild(root);
+    root.addEventListener('click', onClick);
+    root.addEventListener('input', onInput);
+    root.addEventListener('pointerdown', onPointerDown, true);
+    root.addEventListener('pointermove', onPointerMove);
+    root.addEventListener('keydown', onKey);
+    draw();
+    play('whoosh');
+    return true;
+  }
+  function close() {
+    clearTimers();
+    if (root) root.remove();
+    root = null;
+  }
+  function finish() {
+    const a = account();
+    if (a) { a.signedIn = true; saveAccount(a); }
+    const done = onDone;
+    close();
+    if (done) done(account());
+  }
+  function say(text) {
+    const el = $('#login-cap');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    play('type', { strength: 0.4 });
+  }
+  function shake(sel) {
+    const el = $(sel);
+    if (!el) return;
+    el.classList.remove('login-shake'); void el.offsetWidth; el.classList.add('login-shake');
+  }
+  function draw() {
+    clearTimers();
+    const body = $('#login-body');
+    body.innerHTML = { login: loginView, register: registerView, terms: termsView, permission: permissionView, profile: profileView }[S.step]();
+    if (S.step === 'login') startWander();
+    if (S.step === 'terms') startTermsClock();
+    if (S.step === 'permission') startPermClock();
+    if (S.step === 'register') paintRules();
+  }
+
+  /* ---------- 登录：按钮走来走去 ---------- */
+  function loginView() {
+    const acc = account();
+    return `<div class="login-head"><h1>人类含量</h1><p>登录后，山庄才会记住你。</p></div>
+    <div class="login-card">
+      <label class="login-field"><span>昵称</span><input id="login-name" data-k="name" autocomplete="username" value="${esc(S.name || (acc ? acc.name : ''))}" placeholder="你在山庄里的名字"></label>
+      <label class="login-field"><span>密码</span><input id="login-pass" data-k="pass" type="password" autocomplete="current-password" placeholder="注册时设的那个"></label>
+      <div class="login-zone" id="login-zone"><button type="button" class="login-go${S.tired ? ' tired' : ''}" id="login-go" data-a="login">${S.tired ? '好吧，登吧' : '登录'}</button></div>
+      <button type="button" class="login-link" data-a="to-register">还没有账号？注册一个</button>
+    </div>`;
+  }
+  function placeGo(x, y, fast) {
+    const go = $('#login-go');
+    if (!go) return;
+    go.style.transition = fast ? 'left .16s ease-out, top .16s ease-out' : 'left 1s ease-in-out, top 1s ease-in-out';
+    go.style.left = x + 'px';
+    go.style.top = y + 'px';
+  }
+  function zoneBox() {
+    const zone = $('#login-zone'), go = $('#login-go');
+    return zone && go ? { w: zone.clientWidth - go.offsetWidth, h: zone.clientHeight - go.offsetHeight } : null;
+  }
+  function startWander() {
+    if (S.tired) { const b = zoneBox(); if (b) placeGo(b.w / 2, b.h / 2, true); return; }
+    const step = () => { const b = zoneBox(); if (b) placeGo(Math.random() * b.w, Math.random() * b.h, false); };
+    later(step, 30);
+    every(step, 1100);
+  }
+  /* 你一伸手，它就跑到离你最远的角落。 */
+  function escape(px, py) {
+    const zone = $('#login-zone'), b = zoneBox();
+    if (!zone || !b) return;
+    const r = zone.getBoundingClientRect();
+    const corners = [[0, 0], [b.w, 0], [0, b.h], [b.w, b.h], [b.w / 2, 0], [b.w / 2, b.h]];
+    const far = corners.sort((p, q) => Math.hypot(q[0] - (px - r.left), q[1] - (py - r.top)) - Math.hypot(p[0] - (px - r.left), p[1] - (py - r.top)))[0];
+    placeGo(far[0], far[1], true);
+    S.escapes++;
+    play('swap');
+    say(['抓不到我。', '再快一点？', '你真的想登录吗？'][Math.min(2, S.escapes - 1)]);
+    if (S.escapes >= 3) {
+      later(() => {
+        clearTimers();
+        S.tired = true;
+        const go = $('#login-go');
+        if (go) { go.classList.add('tired'); go.textContent = '好吧，登吧'; }
+        const bb = zoneBox();
+        if (bb) placeGo(bb.w / 2, bb.h / 2, false);
+        say('它跑累了。');
+      }, 500);
+    }
+  }
+  function onPointerDown(e) {
+    if (S.step === 'login' && !S.tired && e.target.closest('#login-go')) {
+      e.preventDefault();
+      escape(e.clientX, e.clientY);
+    }
+  }
+  function onPointerMove(e) {
+    if (S.step !== 'login' || S.tired || e.pointerType !== 'mouse') return;
+    const go = $('#login-go');
+    if (!go) return;
+    const r = go.getBoundingClientRect();
+    if (Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)) < 70 && !S.cool) {
+      S.cool = true;
+      later(() => { S.cool = false; }, 380);
+      escape(e.clientX, e.clientY);
+    }
+  }
+  function tryLogin() {
+    const acc = account(), name = ($('#login-name') || {}).value || '', pass = ($('#login-pass') || {}).value || '';
+    if (!acc) { say('这台设备上还没有账号。先注册一个。'); shake('.login-card'); play('error'); return; }
+    if (name.trim() !== acc.name || hash(pass) !== acc.pass) {
+      say(acc.hint ? `密码不对。你给自己留的提示是：「${acc.hint}」` : '密码不对。注册时你也没留提示。');
+      shake('.login-card'); play('error');
+      return;
+    }
+    play('unlock');
+    finish();
+  }
+
+  /* ---------- 注册：密码规则一条接一条 ---------- */
+  function registerView() {
+    const box = (key, on, text) => `<div class="login-check${on ? ' on' : ''}" data-a="toggle" data-k="${key}" role="checkbox" tabindex="0" aria-checked="${on}"><i></i><span>${text}</span></div>`;
+    return `<div class="login-head"><h1>注册</h1><p>山庄只认你自己设的密码。</p></div>
+    <div class="login-card" id="reg-card">
+      <label class="login-field"><span>昵称</span><input id="reg-name" data-k="name" maxlength="16" value="${esc(S.name)}" placeholder="你在山庄里的名字"></label>
+      <label class="login-field"><span>密码</span><span class="login-pass"><input id="reg-pass" data-k="pass" type="${S.show ? 'text' : 'password'}" autocomplete="new-password" value="${esc(S.pass)}" placeholder="设一个密码"><button type="button" data-a="eye">${S.show ? '藏起来' : '显示'}</button></span></label>
+      <ul class="login-rules" id="reg-rules" aria-live="polite"></ul>
+      <label class="login-field"><span>密码提示（忘了的时候给你看）</span><input id="reg-hint" data-k="hint" maxlength="30" value="${esc(S.hint)}" placeholder="比如：我最喜欢的木偶"></label>
+      <div class="login-checks">
+        ${box('optA', S.optA, '不要不让剧团替我安排每天的日程')}
+        ${box('optB', S.optB, '我不拒绝每天接收 3 次剧团推送')}
+        ${box('agreed', S.agreed, '我已阅读并同意<button type="button" class="login-inline" data-a="terms">《山庄协议》</button>')}
+      </div>
+      <button type="button" class="login-btn" data-a="register">注册</button>
+      ${account() ? '<button type="button" class="login-link" data-a="to-login">已经有账号了，去登录</button>' : ''}
+    </div>`;
+  }
+  function paintRules() {
+    const ul = $('#reg-rules');
+    if (!ul) return;
+    const p = S.pass;
+    const shown = [];
+    for (const r of RULES) {
+      const ok = r.ok(p);
+      shown.push(`<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'} ${r.t}</li>`);
+      if (!ok) break;
+    }
+    if (!p) shown.length = 0;
+    const count = shown.length;
+    if (S.lastRules !== undefined && count > S.lastRules) play('glitch', { strength: 0.5 });
+    S.lastRules = count;
+    ul.innerHTML = shown.join('');
+  }
+  const passOK = () => RULES.every((r) => r.ok(S.pass));
+  function tryRegister() {
+    const name = S.name.trim();
+    if (!name) { say('先给自己起个名字。'); shake('#reg-name'); play('error'); return; }
+    if (!passOK()) { say('密码还不够好。看看下面的提示。'); shake('#reg-rules'); play('error'); return; }
+    if (!S.agreed) { say('要先同意《山庄协议》。'); shake('.login-checks'); play('error'); return; }
+    saveAccount({ name, pass: hash(S.pass), hint: S.hint.trim(), at: Date.now(), signedIn: false });
+    bait(S.optA, S.optA ? '注册时，没看出“不要不让剧团替我安排日程”是双重否定' : '注册时，取消了“不要不让剧团替我安排日程”');
+    bait(S.optB, S.optB ? '注册时，留着“我不拒绝每天接收 3 次推送”没取消' : '注册时，取消了“我不拒绝每天接收 3 次推送”');
+    play('pin');
+    S.step = 'permission';
+    S.perm = 0;
+    draw();
+    if (S.optA || S.optB) later(() => say('刚才那两个勾，你读出双重否定了吗？'), 600);
+  }
+
+  /* ---------- 《山庄协议》："不同意"是大按钮，沉默十秒算同意 ---------- */
+  function termsView() {
+    return `<div class="login-head"><h1>《山庄协议》</h1><p>请仔细阅读。</p></div>
+    <div class="login-card"><div class="login-terms">${CLAUSES.map((c) => `<p>${c}</p>`).join('')}</div>
+      <p class="login-clock" id="terms-clock">10 秒后视为同意</p>
+      <button type="button" class="login-btn" data-a="terms-no">不同意</button>
+      <button type="button" class="login-link small" data-a="terms-yes">同意</button>
+    </div>`;
+  }
+  function startTermsClock() {
+    let left = 10;
+    every(() => {
+      left--;
+      const el = $('#terms-clock');
+      if (el) el.textContent = `${left} 秒后视为同意`;
+      if (left <= 3 && left > 0) play('countdown');
+      if (left <= 0) {
+        S.agreed = true; S.agreedBy = 'silence';
+        bait(true, '《山庄协议》没出声，倒计时替你同意了');
+        play('taken');
+        S.step = 'register'; draw();
+        say('你没说话，就当你同意了。');
+      }
+    }, 1000);
+  }
+
+  /* ---------- 授权弹窗："拒绝"会和"允许"换位，倒计时默认允许 ---------- */
+  const PERMS = [
+    { title: '“人类含量”想要读取你的通讯录', text: '以便剧团替你邀请朋友入座。', secs: 6, flip: false },
+    { title: '“人类含量”想要给你发送通知', text: '剧团会在你分心的时候提醒你：该分心了。', secs: 5, flip: true },
+  ];
+  function permissionView() {
+    const p = PERMS[S.perm], swapped = p.flip !== !!S.swapped;
+    const yes = '<button type="button" class="login-btn" data-a="perm-yes">允许</button>';
+    const no = '<button type="button" class="login-btn quiet" data-a="perm-no" id="perm-no">拒绝</button>';
+    return `<div class="login-head"><h1>还有一件事</h1><p>${S.perm + 1} / ${PERMS.length}</p></div>
+    <div class="login-card login-perm"><b>${p.title}</b><p>${p.text}</p>
+      <div class="login-row">${swapped ? no + yes : yes + no}</div>
+      <p class="login-clock" id="perm-clock">${p.secs} 秒后默认允许</p>
+      <p class="login-fine">演示弹窗，不会真的读取任何东西。</p>
+    </div>`;
+  }
+  function startPermClock() {
+    let left = PERMS[S.perm].secs;
+    every(() => {
+      left--;
+      const el = $('#perm-clock');
+      if (el) el.textContent = `${left} 秒后默认允许`;
+      if (left <= 3 && left > 0) play('countdown');
+      if (left <= 0) answerPerm(true, true);
+    }, 1000);
+  }
+  function answerPerm(allow, bySilence) {
+    const p = PERMS[S.perm];
+    bait(allow, allow ? (bySilence ? `授权弹窗没点，倒计时替你${p.title.replace('“人类含量”想要', '允许了')}` : `授权弹窗里点了允许：${p.title.replace('“人类含量”想要', '')}`) : `授权弹窗里拒绝了：${p.title.replace('“人类含量”想要', '')}`);
+    play(allow ? 'taken' : 'resist');
+    if (bySilence) say('你没点，就当你允许了。');
+    S.swapped = false;
+    if (S.perm + 1 < PERMS.length) { S.perm++; draw(); return; }
+    S.step = 'profile';
+    draw();
+  }
+
+  /* ---------- 资料完整度：永远差一点 ---------- */
+  function profileView() {
+    const pct = PCTS[Math.min(S.filled, PCTS.length - 1)], item = PROFILE[S.pIndex % PROFILE.length];
+    const field = item.chips
+      ? `<div class="login-chips">${item.chips.map((c) => `<button type="button" data-a="profile-chip" data-v="${esc(c)}">${esc(c)}</button>`).join('')}</div>`
+      : `<div class="login-row"><input class="login-input" id="profile-input" placeholder="${esc(item.placeholder)}"><button type="button" class="login-btn quiet fit" data-a="profile-save">填好了</button></div>`;
+    return `<div class="login-head"><h1>完善资料</h1><p>资料越完整，剧团越懂你。</p></div>
+    <div class="login-card"><div class="login-meter"><span>资料完整度</span><b>${pct}%</b></div><div class="login-bar"><i style="width:${pct}%"></i></div>
+      <p class="login-almost">${S.filled ? '还差一点点就完美了。' : '再补一项就完美了。'}</p>
+      <div class="login-field"><span>${item.label}</span>${field}</div>
+      <button type="button" class="login-link" data-a="profile-skip">就这样，进山庄</button>
+    </div>`;
+  }
+  function fillProfile(v) {
+    const item = PROFILE[S.pIndex % PROFILE.length];
+    if (!String(v || '').trim()) { say('总得填点什么。'); play('error'); return; }
+    S.profile[item.key] = String(v).trim().slice(0, 30);
+    S.filled++;
+    S.pIndex++;
+    play('xp', { pitch: 1 + Math.min(S.filled, 8) * 0.06 });
+    draw();
+    if (S.filled === 3) say('完整度不会到 100% 的。你还在填。');
+  }
+  function leaveProfile() {
+    bait(S.filled >= 2, S.filled >= 2 ? `为了差的那一点完美，多填了 ${S.filled} 项资料` : '资料没填满，就进了山庄');
+    const acc = account();
+    if (acc) { acc.profile = S.profile; saveAccount(acc); }
+    play('unlock');
+    finish();
+  }
+
+  /* ---------- 事件 ---------- */
+  function onInput(e) {
+    const k = e.target.dataset.k;
+    if (!k) return;
+    S[k] = e.target.value;
+    if (!e.isComposing) play('type', { strength: 0.3 });
+    if (k === 'pass' && S.step === 'register') paintRules();
+  }
+  function onKey(e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('login-check')) { e.preventDefault(); e.target.click(); return; }
+    if (e.key !== 'Enter' || e.isComposing) return;
+    if (S.step === 'login' && e.target.id === 'login-pass') tryLogin();
+    if (S.step === 'profile' && e.target.id === 'profile-input') fillProfile(e.target.value);
+  }
+  function onClick(e) {
+    const b = e.target.closest('[data-a]');
+    if (!b) return;
+    const a = b.dataset.a;
+    if (a !== 'toggle' && a !== 'eye') play('click', { strength: 0.6 });
+    if (a === 'login') return S.tired ? tryLogin() : escape(e.clientX, e.clientY);
+    if (a === 'to-register') { S.step = 'register'; return draw(); }
+    if (a === 'to-login') { S.step = 'login'; S.tired = false; S.escapes = 0; return draw(); }
+    if (a === 'eye') { S.show = !S.show; play('tick'); const i = $('#reg-pass'); if (i) i.type = S.show ? 'text' : 'password'; b.textContent = S.show ? '藏起来' : '显示'; return; }
+    if (a === 'toggle') {
+      const k = b.dataset.k;
+      if (k === 'agreed' && !S.agreed) { S.step = 'terms'; play('paper'); return draw(); }
+      S[k] = !S[k];
+      play(S[k] ? 'toggle-on' : 'toggle-off');
+      b.classList.toggle('on', S[k]);
+      b.setAttribute('aria-checked', S[k]);
+      return;
+    }
+    if (a === 'terms') { S.step = 'terms'; play('paper'); return draw(); }
+    if (a === 'terms-no') { say('不同意的话，就不能注册哦。'); shake('.login-card'); play('reject'); return; }
+    if (a === 'terms-yes') { S.agreed = true; S.agreedBy = 'hand'; bait(false, '《山庄协议》在倒计时结束前，自己找到了小小的“同意”'); play('resist'); S.step = 'register'; return draw(); }
+    if (a === 'register') return tryRegister();
+    if (a === 'perm-yes') return answerPerm(true, false);
+    if (a === 'perm-no') {
+      if (!S.swapped) { S.swapped = true; play('swap'); say('手滑了？'); const clock = $('#perm-clock') ? $('#perm-clock').textContent : ''; clearTimers(); const body = $('#login-body'); body.innerHTML = permissionView(); const c2 = $('#perm-clock'); if (c2 && clock) c2.textContent = clock; startPermClockFrom(parseInt(clock, 10) || 3); return; }
+      return answerPerm(false, false);
+    }
+    if (a === 'profile-chip') return fillProfile(b.dataset.v);
+    if (a === 'profile-save') return fillProfile(($('#profile-input') || {}).value);
+    if (a === 'profile-skip') return leaveProfile();
+  }
+  function startPermClockFrom(left) {
+    every(() => {
+      left--;
+      const el = $('#perm-clock');
+      if (el) el.textContent = `${left} 秒后默认允许`;
+      if (left <= 3 && left > 0) play('countdown');
+      if (left <= 0) answerPerm(true, true);
+    }, 1000);
+  }
+
+  return { open, close, isOpen: () => !!root, account, signedIn, signOut, forget, RULES };
+})();
+window.Login = Login;
+
+</script>
+<script>
+'use strict';
 /* 界面（续）：议事、夜谈、木偶工坊、回声、地图、设置、开场，以及启动。 */
 
 /* ---------- 议事：三张字条 ---------- */
@@ -4647,7 +5200,7 @@ SHEETS.labmenu = (s) => {
     body: `<div class="stack tight"><h2 class="title sm">这次，界面是来捣乱的。</h2><p class="sub">按钮会追你，选项会换位，它还会替你默认同意。</p></div>
     <div class="field"><span class="label">带哪件事进去</span><div class="chips">${[['', '先用示例'], ...tasks.map((t) => [t.id, t.title])].slice(0, 4).map(([id, name]) => `<button type="button" class="chip${s.form.task === id ? ' on' : ''}" style="flex:0 1 auto;max-width:100%" data-act="lab-task" data-id="${id}"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</b></button>`).join('')}</div></div>
     <button type="button" class="btn" data-act="lab-go" data-level="intro">从序章开始</button>
-    <div>${LAB_LEVELS.map(([id, name, sub], i) => { const locked = i >= 3 && !back; return `<button type="button" class="list-row" data-act="lab-go" data-level="${id}" ${locked ? 'data-locked="1"' : ''}><span class="grow"><b class="${locked ? 'dim' : ''}">${name}</b><span class="sub">${locked ? `再做完 ${need} 项任务开门` : sub}</span></span><span class="chev">${icon(locked ? 'lock' : 'arrow')}</span></button>`; }).join('')}</div>`,
+    <div>${LAB_LEVELS.map(([id, name, sub], i) => { const locked = i >= 5 && !back; return `<button type="button" class="list-row" data-act="lab-go" data-level="${id}" ${locked ? 'data-locked="1"' : ''}><span class="grow"><b class="${locked ? 'dim' : ''}">${name}</b><span class="sub">${locked ? `再做完 ${need} 项任务开门` : sub}</span></span><span class="chev">${icon(locked ? 'lock' : 'arrow')}</span></button>`; }).join('')}</div>`,
     picked };
 };
 Object.assign(ACT, {
@@ -4675,6 +5228,12 @@ Object.assign(ACT, {
 });
 /* 恨点图鉴：界面会在哪些地方故意让你不爽。 */
 const HATES = [
+  ['hand', '登录', '登录按钮走来走去，你一靠近它就跑，跑三次才累。'],
+  ['lock', '注册密码', '密码规则一条接一条冒出来：要大写、要符号、要木偶的名字、数字加起来等于 7……'],
+  ['task', '同意条款', '默认勾好的是双重否定：“不要不让剧团替我安排日程”。'],
+  ['scissors', '《山庄协议》', '“不同意”是大按钮，“同意”是小字；10 秒不说话就算同意。（02 沉默算同意）'],
+  ['drag', '授权弹窗', '你伸手点“拒绝”，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
+  ['sparkle', '完善资料', '资料完整度永远差一点到 100%，再补一项、再补一项。（03 完美差一点）'],
   ['pen', '写待办', '你一停笔，它就替你把话写完。'],
   ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，叉第一次还会躲开。'],
   ['timer', '开始计时', '假加载冲到 99% 就卡住，旁边递上“先刷会儿再说”。'],
@@ -4682,8 +5241,9 @@ const HATES = [
   ['sparkle', '登记完成', '最显眼的是“一键全部打勾”。'],
   ['eye', '人类验证', '每天第一次登记要点出所有木偶。第一次选对了也判你没通过。'],
   ['timer', '长按确认', '按到一半，被它打断一次。'],
-  ['drag', '撤销', '想点“保留”，它跟“撤销”换了位置。'],
-  ['scissors', '剪字条', '替你预选一张错的，8 秒后自己下剪。'],
+  ['drag', '撤销', '想点“保留”，它跟“撤销”换了位置。（01 按钮会换位）'],
+  ['scissors', '剪字条', '替你预选一张错的，8 秒后自己下剪。（02 沉默算同意）'],
+  ['mask', '剧场', '“等待”允许拒绝换位，“反驳”沉默十秒算同意，“像素”永远 99.7%。三幕都不用解锁。'],
   ['moon', '收工', '默认勾好“把没做完的也记成做完”。'],
 ];
 const hateList = () => `<div class="raised stack"><b style="font-size:16px">恨点图鉴</b>${HATES.map(([ic, name, text]) => `<div class="row top"><span class="rose">${icon(ic)}</span><span class="grow"><b style="font-size:14px">${name}</b><br><span class="small dim">${text}</span></span></div>`).join('')}<p class="small dim">每一次你亲手拦下或被它带走，都会算进人类含量。</p></div>`;
@@ -4693,7 +5253,7 @@ SHEETS.help = (s) => {
   return { title: '设置与玩法', scene: 'chapel',
     body: `<div class="stack"><h2 class="title sm">可以借力，决定留给自己。</h2>${rule('task', '写下今天的约定，做完后亲手登记。完成得越干脆，经验越多。')}${rule('map', '每整件做完一项，地图上的雾散一点，新的地点和夜谈策略随之开放。')}${rule('moon', '四夜之约：十个人里藏着三个提线人。每做完一件现实里的事，下一夜才会降临；四夜走完，测出你的牌风。')}${rule('scissors', '三张字条里有一张在牵着你走；五席夜谈里有一个人拿了钥匙。')}${rule('hand', '界面会在细节里使坏。亲手拦下，人类含量就不会掉。')}</div>
     <div class="hr"></div>${seg('tone', [['1', '嘴损一点'], ['0', '温和一点']], Store.sharp ? '1' : '0')}${sw('mischief', Store.mischief, '让界面使坏')}${Store.mischief ? hateList() : ''}${sw('unlock-all', Store.unlockAll, '演示：地图全部开门')}<div class="hr"></div>
-    <button type="button" class="btn quiet" data-act="${Store.demo ? 'exit-demo-sheet' : 'enter-demo'}">${Store.demo ? '退出示例' : '体验示例'}</button><button type="button" class="btn quiet" data-act="sheet" data-sheet="sound">声音与音乐</button><button type="button" class="btn quiet" data-act="replay-intro">重看开场</button>
+    <button type="button" class="btn quiet" data-act="${Store.demo ? 'exit-demo-sheet' : 'enter-demo'}">${Store.demo ? '退出示例' : '体验示例'}</button><button type="button" class="btn quiet" data-act="sheet" data-sheet="sound">声音与音乐</button><button type="button" class="btn quiet" data-act="replay-intro">重看开场</button><button type="button" class="btn quiet" data-act="sign-out">退出登录，再演示一遍</button>
     <button type="button" class="link rose" data-act="reset">${s.form.confirmReset ? '再点一次，清空这台设备上的全部记录' : '清空记录，从头演示'}</button>` };
 };
 Object.assign(ACT, {
@@ -4702,13 +5262,14 @@ Object.assign(ACT, {
   'unlock-all'() { Store.unlockAll = !Store.unlockAll; Store.savePrefs(); sfx(Store.unlockAll ? 'unlock' : 'lock'); renderSheet(); render(); },
   'exit-demo-sheet'() { closeSheet(true); ACT['exit-demo'](); },
   'replay-intro'() { closeSheet(true); openCover('intro', { page: 0 }); sfx('whoosh'); },
+  'sign-out'() { closeSheet(true); if (!window.Login) return; Login.signOut(); sfx('close'); Login.open({ onDone: () => render() }); },
   reset() {
     const s = UI.sheet;
     if (!s.form.confirmReset) { s.form.confirmReset = true; sfx('error'); return renderSheet(); }
     Store.reset(); Focus.clear();
     Object.assign(UI, { tab: 'village', route: null, councilTask: null, drafts: {}, talk: { game: null, candidate: null, session: '', recorded: false } });
     Object.assign(UI.prefs, { seen: 'board,theater,fire,tower', lookHint: false, onboarded: false }); UI.save();
-    closeSheet(true); render(); openCover('intro', { page: 0 }); sfx('whoosh');
+    closeSheet(true); if (window.Login) Login.forget(); render(); startDoor(); sfx('whoosh');
   },
 });
 
@@ -4806,6 +5367,13 @@ setInterval(() => {
 window.addEventListener('resize', () => { if (UI.tab === 'village') Village.layout(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
+/* ---------- 进门：先登录，再看开场 ---------- */
+function startDoor() {
+  const afterLogin = () => { render(); if (!UI.prefs.onboarded) openCover('intro', { page: 0 }); };
+  if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin });
+  else afterLogin();
+}
+
 /* ---------- 启动 ---------- */
 (function boot() {
   const css = Object.entries(window.ASSET || {}).filter(([k]) => k !== 'bgm').map(([k, v]) => `.art-${k}{background-image:url("${v}")}`).join('\n');
@@ -4814,7 +5382,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) rend
   document.head.appendChild(style);
   Store.load(); Focus.load(); UI.load();
   render();
-  if (!UI.prefs.onboarded) openCover('intro', { page: 0 });
+  startDoor();
 })();
 
 </script>

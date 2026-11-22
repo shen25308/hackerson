@@ -26,7 +26,7 @@ assets['bgm'] = data_url(os.path.join(RES, 'bgm_default.m4a'), 'audio/mp4')
 asset_js = 'window.ASSET = {\n' + ',\n'.join(f'  {k}: "{v}"' for k, v in assets.items()) + '\n};'
 fate_data = json.load(open(os.path.join(RES, 'fate.json'), encoding='utf-8'))
 asset_js += '\nwindow.FATE_DATA = ' + json.dumps(fate_data, ensure_ascii=False).replace('</', '<\\/') + ';'
-scripts = ''.join(f'<script>\n{read(n)}\n</script>\n' for n in ('core.js', 'sound.js', 'ui.js', 'lab.js', 'fate.js', 'ui2.js') if read(n))
+scripts = ''.join(f'<script>\n{read(n)}\n</script>\n' for n in ('core.js', 'sound.js', 'ui.js', 'lab.js', 'fate.js', 'login.js', 'ui2.js') if read(n))
 
 content = f'''<title>人类含量</title>
 <meta name="claude:viewport-fit-sides" content="cover">

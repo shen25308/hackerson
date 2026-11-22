@@ -118,3 +118,26 @@
   .fate-tint, .fate-face, .fate-dial b { transition: none; }
   .fate-opt, .fate-verdict { animation: none; }
 }
+
+/* 电脑大屏：十个座位排成一排，牌面放大，旁白和选项收在中间 */
+@media (min-width: 900px) {
+  .fate-top { padding: 28px 0 12px; }
+  .fate-top-l b { font-size: 32px; }
+  .fate-top-l span, .fate-top-r span { font-size: 14px; }
+  .fate-seats { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 12px 10px; padding: 16px 0 20px; }
+  .fate-face { width: 66px; height: 80px; border-radius: 8px; }
+  .fate-back::after { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+  .fate-seat b { font-size: 13.5px; }
+  .fate-stage { padding: 20px 40px 28px; }
+  .fate-narr { font-size: 20px; line-height: 2; }
+  .fate-ask { font-size: 19px; margin-top: 20px; }
+  .fate-opts, .fate-stage > .fate-btn { align-self: center; width: min(660px, 100%); }
+  .fate-opts { margin-top: 22px; gap: 12px; }
+  .fate-opt { padding: 16px 18px; }
+  .fate-opt:hover { border-color: rgba(227, 143, 64, 0.5) !important; }
+  .fate-opt-t { font-size: 16.5px; }
+  .fate-dials { gap: 10px 28px; padding-bottom: 26px; }
+  .fate-dial i { font-size: 13px; }
+  .fate-dial em { width: 64px; }
+  .fate-verdict { padding: 44px max(28px, calc((100% - 720px) / 2)) 44px; }
+}

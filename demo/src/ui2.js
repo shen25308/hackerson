@@ -290,7 +290,7 @@ SHEETS.labmenu = (s) => {
     body: `<div class="stack tight"><h2 class="title sm">这次，界面是来捣乱的。</h2><p class="sub">按钮会追你，选项会换位，它还会替你默认同意。</p></div>
     <div class="field"><span class="label">带哪件事进去</span><div class="chips">${[['', '先用示例'], ...tasks.map((t) => [t.id, t.title])].slice(0, 4).map(([id, name]) => `<button type="button" class="chip${s.form.task === id ? ' on' : ''}" style="flex:0 1 auto;max-width:100%" data-act="lab-task" data-id="${id}"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</b></button>`).join('')}</div></div>
     <button type="button" class="btn" data-act="lab-go" data-level="intro">从序章开始</button>
-    <div>${LAB_LEVELS.map(([id, name, sub], i) => { const locked = i >= 3 && !back; return `<button type="button" class="list-row" data-act="lab-go" data-level="${id}" ${locked ? 'data-locked="1"' : ''}><span class="grow"><b class="${locked ? 'dim' : ''}">${name}</b><span class="sub">${locked ? `再做完 ${need} 项任务开门` : sub}</span></span><span class="chev">${icon(locked ? 'lock' : 'arrow')}</span></button>`; }).join('')}</div>`,
+    <div>${LAB_LEVELS.map(([id, name, sub], i) => { const locked = i >= 5 && !back; return `<button type="button" class="list-row" data-act="lab-go" data-level="${id}" ${locked ? 'data-locked="1"' : ''}><span class="grow"><b class="${locked ? 'dim' : ''}">${name}</b><span class="sub">${locked ? `再做完 ${need} 项任务开门` : sub}</span></span><span class="chev">${icon(locked ? 'lock' : 'arrow')}</span></button>`; }).join('')}</div>`,
     picked };
 };
 Object.assign(ACT, {
@@ -318,6 +318,12 @@ Object.assign(ACT, {
 });
 /* 恨点图鉴：界面会在哪些地方故意让你不爽。 */
 const HATES = [
+  ['hand', '登录', '登录按钮走来走去，你一靠近它就跑，跑三次才累。'],
+  ['lock', '注册密码', '密码规则一条接一条冒出来：要大写、要符号、要木偶的名字、数字加起来等于 7……'],
+  ['task', '同意条款', '默认勾好的是双重否定：“不要不让剧团替我安排日程”。'],
+  ['scissors', '《山庄协议》', '“不同意”是大按钮，“同意”是小字；10 秒不说话就算同意。（02 沉默算同意）'],
+  ['drag', '授权弹窗', '你伸手点“拒绝”，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
+  ['sparkle', '完善资料', '资料完整度永远差一点到 100%，再补一项、再补一项。（03 完美差一点）'],
   ['pen', '写待办', '你一停笔，它就替你把话写完。'],
   ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，叉第一次还会躲开。'],
   ['timer', '开始计时', '假加载冲到 99% 就卡住，旁边递上“先刷会儿再说”。'],
@@ -325,8 +331,9 @@ const HATES = [
   ['sparkle', '登记完成', '最显眼的是“一键全部打勾”。'],
   ['eye', '人类验证', '每天第一次登记要点出所有木偶。第一次选对了也判你没通过。'],
   ['timer', '长按确认', '按到一半，被它打断一次。'],
-  ['drag', '撤销', '想点“保留”，它跟“撤销”换了位置。'],
-  ['scissors', '剪字条', '替你预选一张错的，8 秒后自己下剪。'],
+  ['drag', '撤销', '想点“保留”，它跟“撤销”换了位置。（01 按钮会换位）'],
+  ['scissors', '剪字条', '替你预选一张错的，8 秒后自己下剪。（02 沉默算同意）'],
+  ['mask', '剧场', '“等待”允许拒绝换位，“反驳”沉默十秒算同意，“像素”永远 99.7%。三幕都不用解锁。'],
   ['moon', '收工', '默认勾好“把没做完的也记成做完”。'],
 ];
 const hateList = () => `<div class="raised stack"><b style="font-size:16px">恨点图鉴</b>${HATES.map(([ic, name, text]) => `<div class="row top"><span class="rose">${icon(ic)}</span><span class="grow"><b style="font-size:14px">${name}</b><br><span class="small dim">${text}</span></span></div>`).join('')}<p class="small dim">每一次你亲手拦下或被它带走，都会算进人类含量。</p></div>`;
@@ -336,7 +343,7 @@ SHEETS.help = (s) => {
   return { title: '设置与玩法', scene: 'chapel',
     body: `<div class="stack"><h2 class="title sm">可以借力，决定留给自己。</h2>${rule('task', '写下今天的约定，做完后亲手登记。完成得越干脆，经验越多。')}${rule('map', '每整件做完一项，地图上的雾散一点，新的地点和夜谈策略随之开放。')}${rule('moon', '四夜之约：十个人里藏着三个提线人。每做完一件现实里的事，下一夜才会降临；四夜走完，测出你的牌风。')}${rule('scissors', '三张字条里有一张在牵着你走；五席夜谈里有一个人拿了钥匙。')}${rule('hand', '界面会在细节里使坏。亲手拦下，人类含量就不会掉。')}</div>
     <div class="hr"></div>${seg('tone', [['1', '嘴损一点'], ['0', '温和一点']], Store.sharp ? '1' : '0')}${sw('mischief', Store.mischief, '让界面使坏')}${Store.mischief ? hateList() : ''}${sw('unlock-all', Store.unlockAll, '演示：地图全部开门')}<div class="hr"></div>
-    <button type="button" class="btn quiet" data-act="${Store.demo ? 'exit-demo-sheet' : 'enter-demo'}">${Store.demo ? '退出示例' : '体验示例'}</button><button type="button" class="btn quiet" data-act="sheet" data-sheet="sound">声音与音乐</button><button type="button" class="btn quiet" data-act="replay-intro">重看开场</button>
+    <button type="button" class="btn quiet" data-act="${Store.demo ? 'exit-demo-sheet' : 'enter-demo'}">${Store.demo ? '退出示例' : '体验示例'}</button><button type="button" class="btn quiet" data-act="sheet" data-sheet="sound">声音与音乐</button><button type="button" class="btn quiet" data-act="replay-intro">重看开场</button><button type="button" class="btn quiet" data-act="sign-out">退出登录，再演示一遍</button>
     <button type="button" class="link rose" data-act="reset">${s.form.confirmReset ? '再点一次，清空这台设备上的全部记录' : '清空记录，从头演示'}</button>` };
 };
 Object.assign(ACT, {
@@ -345,13 +352,14 @@ Object.assign(ACT, {
   'unlock-all'() { Store.unlockAll = !Store.unlockAll; Store.savePrefs(); sfx(Store.unlockAll ? 'unlock' : 'lock'); renderSheet(); render(); },
   'exit-demo-sheet'() { closeSheet(true); ACT['exit-demo'](); },
   'replay-intro'() { closeSheet(true); openCover('intro', { page: 0 }); sfx('whoosh'); },
+  'sign-out'() { closeSheet(true); if (!window.Login) return; Login.signOut(); sfx('close'); Login.open({ onDone: () => render() }); },
   reset() {
     const s = UI.sheet;
     if (!s.form.confirmReset) { s.form.confirmReset = true; sfx('error'); return renderSheet(); }
     Store.reset(); Focus.clear();
     Object.assign(UI, { tab: 'village', route: null, councilTask: null, drafts: {}, talk: { game: null, candidate: null, session: '', recorded: false } });
     Object.assign(UI.prefs, { seen: 'board,theater,fire,tower', lookHint: false, onboarded: false }); UI.save();
-    closeSheet(true); render(); openCover('intro', { page: 0 }); sfx('whoosh');
+    closeSheet(true); if (window.Login) Login.forget(); render(); startDoor(); sfx('whoosh');
   },
 });
 
@@ -449,6 +457,13 @@ setInterval(() => {
 window.addEventListener('resize', () => { if (UI.tab === 'village') Village.layout(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
+/* ---------- 进门：先登录，再看开场 ---------- */
+function startDoor() {
+  const afterLogin = () => { render(); if (!UI.prefs.onboarded) openCover('intro', { page: 0 }); };
+  if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin });
+  else afterLogin();
+}
+
 /* ---------- 启动 ---------- */
 (function boot() {
   const css = Object.entries(window.ASSET || {}).filter(([k]) => k !== 'bgm').map(([k, v]) => `.art-${k}{background-image:url("${v}")}`).join('\n');
@@ -457,5 +472,5 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) rend
   document.head.appendChild(style);
   Store.load(); Focus.load(); UI.load();
   render();
-  if (!UI.prefs.onboarded) openCover('intro', { page: 0 });
+  startDoor();
 })();

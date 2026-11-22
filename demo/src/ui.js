@@ -115,7 +115,7 @@ function offerTroupe() {
   if (!Store.mischief || Store.closed || !Store.today.tasks.length || UI.prefs.troupeDay === today || UI.troupeTimer) return;
   UI.troupeTimer = setTimeout(() => {
     UI.troupeTimer = 0;
-    if (UI.tab !== 'tasks' || UI.route || UI.sheet || UI.cover || (window.Lab && Lab.isOpen()) || UI.prefs.troupeDay === today) return;
+    if (UI.tab !== 'tasks' || UI.route || UI.sheet || UI.cover || (window.Lab && Lab.isOpen()) || (window.Login && Login.isOpen()) || UI.prefs.troupeDay === today) return;
     UI.prefs.troupeDay = today; UI.save();
     sfx('tempt');
     openCover('troupe', { moved: false });
@@ -124,7 +124,12 @@ function offerTroupe() {
 
 function renderChrome() {
   const tabs = [['village', 'home', '山庄'], ['tasks', 'task', '待办'], ['council', 'council', '议事'], ['puppets', 'mask', '木偶'], ['echo', 'wave', '回声']];
-  $('#tabbar').innerHTML = tabs.map(([id, ic, name]) => `<button type="button" data-act="tab" data-tab="${id}" class="${UI.tab === id ? 'on' : ''}"${UI.tab === id ? ' aria-current="page"' : ''}>${icon(ic)}<span>${name}</span>${id === 'tasks' && Store.pending ? `<i class="badge">${Store.pending}</i>` : ''}</button>`).join('');
+  const navHTML = tabs.map(([id, ic, name]) => `<button type="button" data-act="tab" data-tab="${id}" class="${UI.tab === id ? 'on' : ''}"${UI.tab === id ? ' aria-current="page"' : ''}>${icon(ic)}<span>${name}</span>${id === 'tasks' && Store.pending ? `<i class="badge">${Store.pending}</i>` : ''}</button>`).join('');
+  const hc = Rules.humanContent(Store.s), acc = window.Login && Login.account();
+  $('#tabbar').innerHTML = `<div class="side-brand"><b>人类含量</b><span>夜巡山庄${acc && acc.name ? ' · ' + esc(acc.name) : ''}</span></div>${navHTML}
+  <div class="side-foot">${Store.demo ? '<div class="side-demo"><span>示例中，不写入你的档案</span><button type="button" data-act="exit-demo">退出示例</button></div>' : ''}<button type="button" class="side-hc" data-act="tab" data-tab="echo"><b class="${hc.percent >= 60 ? 'ember' : 'rose'}">${hc.percent}%</b><span>人类含量</span></button>
+  <div class="side-role"><span>${Store.role.name} · Lv.${Store.level}</span>${meter(Store.hp / 100, 'rose')}<small>生命 ${Store.hp} · 经验 ${Store.xp}</small></div>
+  <div class="side-tools"><button type="button" class="round" data-act="sheet" data-sheet="sound" aria-label="声音">${icon('sound')}</button><button type="button" class="round" data-act="sheet" data-sheet="help" aria-label="设置与玩法">${icon('gear')}</button></div></div>`;
   renderDock();
 }
 function renderDock() {
@@ -307,7 +312,7 @@ const Village = {
     if (!Store.isOpen(id)) return { title: place.name, hint: '雾还没散', text: `${place.feature}。再整件做完 ${place.need - Store.gateCount} 项任务，这里开门。`, button: '去任务板拿钥匙', locked: true };
     const texts = {
       board: [Store.closed ? '今天已经收工，记录还在。' : Store.today.tasks.length ? `今天还有 ${Store.pending} 项待办。` : '先写下一件今天能做完的事。', '看今日待办'],
-      theater: ['抢写、追着你跑的按钮、换位的选项。亲手试一次界面怎么抢走你的决定。', '进剧场'], backstage: ['后三幕：像素、反驳、第 N 次。', '去后台'],
+      theater: ['抢写、追着你跑的按钮、换位的选项。亲手试一次界面怎么抢走你的决定。', '进剧场'], backstage: ['最后一幕：第 N 次。', '去后台'],
       fire: ['十个人围着火堆坐好了。四夜之约、三张字条和五席夜谈都在这里。', '坐到火堆旁'], tower: [`已经整件做完 ${Store.completed} 项。回看任务、选票和用时。`, '翻开行为回声'],
       decisions: ['回看你采用过的策略和投过的票。', '上观星台'], mirror: ['把现实里的行动和桌上的决定并排放。', '走进回声廊'],
       ferry: ['建一个房间邀朋友，或输入六位房间码入座。', '去渡口'], experiment: ['写下一个假设，下次留下可以核对的记录。', '到镜湖边'],

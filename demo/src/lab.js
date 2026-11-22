@@ -7,7 +7,7 @@
   const ALT = '先不做，等 AI 再成熟一点';
   const ORDER = ['prologue', 'feed', 'wait', 'pixel', 'argue', 'retry', 'archive'];
   const KEYS = ORDER.slice(0, 6);
-  const BACKSTAGE = ['pixel', 'argue', 'retry'];
+  const BACKSTAGE = ['retry'];
   const NAME = { prologue: '抢写补全', feed: '收藏夹', wait: '等待', pixel: '像素', argue: '反驳', retry: '第 N 次', archive: '记录' };
   const ACT = (k) => (k === 'prologue' ? '序幕' : k === 'archive' ? '终幕' : `第 ${KEYS.indexOf(k)} 幕`);
   const LABEL = (k) => `${ACT(k)} · ${NAME[k]}`;
