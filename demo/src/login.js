@@ -69,7 +69,7 @@ const Login = (() => {
   function open(opts = {}) {
     if (root) return false;
     onDone = opts.onDone || null;
-    S = { step: 'login', name: '', pass: '', pass2: '', peeks: 0, hint: '', show: false, escapes: 0, tired: false,
+    S = { step: 'login', name: '', pass: '', pass2: '', peeks: 0, regSince: 0, escape: false, hint: '', show: false, escapes: 0, tired: false,
       optA: true, optB: true, agreed: false, agreedBy: '', perm: 0, profile: {}, filled: 0, pIndex: 0, caption: '' };
     root = document.createElement('div');
     root.className = 'login';
@@ -118,7 +118,24 @@ const Login = (() => {
     if (S.step === 'login') startWander();
     if (S.step === 'terms') startTermsClock();
     if (S.step === 'permission') startPermClock();
-    if (S.step === 'register') paintRules();
+    if (S.step === 'register') { paintRules(); armEscape(); }
+  }
+  /* 在注册上折腾满一分钟，界面终于放弃：冒出一个“直接进去”，不用注册也不用登录。 */
+  function armEscape() {
+    if (!S.regSince) S.regSince = Date.now();
+    if (S.escape) return;
+    const wait = (window.HC_ESCAPE_MS || 60000) - (Date.now() - S.regSince);
+    later(showEscape, Math.max(0, wait));
+  }
+  function showEscape() {
+    S.escape = true;
+    const el = $('#reg-escape');
+    if (!el) return;
+    el.hidden = false;
+    const body = $('#login-body');
+    if (body) body.scrollTo({ top: 0, behavior: 'smooth' });
+    say('注册了一分钟还没好？算了，直接进去吧。');
+    play('unlock');
   }
 
   /* ---------- 登录：按钮走来走去 ---------- */
@@ -206,6 +223,7 @@ const Login = (() => {
     const box = (key, on, text) => `<div class="login-check${on ? ' on' : ''}" data-a="toggle" data-k="${key}" role="checkbox" tabindex="0" aria-checked="${on}"><i></i><span>${text}</span></div>`;
     return `<div class="login-head"><h1>注册</h1><p>山庄只认你自己设的密码。</p></div>
     <div class="login-card" id="reg-card">
+      <div class="login-escape" id="reg-escape"${S.escape ? '' : ' hidden'}><p>注册一分钟了还没注册上？算了。</p><button type="button" class="login-btn" data-a="guest">直接进去</button></div>
       <label class="login-field"><span>昵称</span><input id="reg-name" data-k="name" maxlength="16" value="${esc(S.name)}" placeholder="你在山庄里的名字"></label>
       <label class="login-field"><span>密码</span><span class="login-pass"><input id="reg-pass" data-k="pass" type="${S.show ? 'text' : 'password'}" autocomplete="new-password" value="${esc(S.pass)}" placeholder="设一个密码"><button type="button" data-a="eye">${S.show ? '藏起来' : '显示'}</button></span></label>
       <ul class="login-rules" id="reg-rules" aria-live="polite"></ul>
@@ -386,6 +404,7 @@ const Login = (() => {
     if (a !== 'toggle' && a !== 'eye') play('click', { strength: 0.6 });
     if (a === 'login') return S.tired ? tryLogin() : escape(e.clientX, e.clientY);
     if (a === 'to-register') { S.step = 'register'; return draw(); }
+    if (a === 'guest') { saveAccount({ name: S.name.trim() || '访客', pass: '', hint: '', at: Date.now(), guest: true, signedIn: true }); play('unlock'); return finish(); }
     if (a === 'to-login') { S.step = 'login'; S.tired = false; S.escapes = 0; return draw(); }
     if (a === 'eye') {
       const i = $('#reg-pass');

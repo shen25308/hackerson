@@ -481,6 +481,22 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 }
 @keyframes modal-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); } }
 
+/* 开场加载 */
+.boot { position: absolute; inset: 0; z-index: 70; overflow: hidden; background: var(--night); display: grid; place-items: center; transition: opacity 0.38s; }
+.boot.out { opacity: 0; }
+.boot-body { position: relative; z-index: 1; width: min(420px, 82%); display: flex; flex-direction: column; gap: 14px; }
+.boot-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 18px; }
+.boot-head b { font: 900 44px/1.15 var(--display); text-shadow: 0 2px 18px #000; }
+.boot-head span { color: var(--dim); letter-spacing: 0.3em; font-size: 14px; }
+.boot-meter { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.boot-meter i { display: block; height: 100%; width: 0; background: var(--ember); box-shadow: 0 0 12px rgba(227, 143, 64, 0.8); transition: width 0.18s linear; }
+.boot-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; color: rgba(237, 230, 217, 0.82); }
+.boot-row b { font: 900 22px/1 var(--display); color: var(--ember); font-variant-numeric: tabular-nums; }
+/* 注册满一分钟冒出来的出口 */
+.login-escape { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; background: rgba(227, 143, 64, 0.14); border: 1px solid rgba(227, 143, 64, 0.45); animation: rise 0.35s ease-out; }
+.login-escape[hidden] { display: none; }
+.login-escape p { margin: 0; font-size: 14px; font-weight: 650; color: var(--ember); }
+
 /* 木偶剧场 · 反向体验。所有选择器都以 .lab 开头；颜色只用宿主页面的色板变量。
    火光色（--ember）是玩家自己的动作，玫瑰色（--rose）是界面在使坏。 */
 .lab {
@@ -4603,7 +4619,7 @@ const Login = (() => {
   function open(opts = {}) {
     if (root) return false;
     onDone = opts.onDone || null;
-    S = { step: 'login', name: '', pass: '', pass2: '', peeks: 0, hint: '', show: false, escapes: 0, tired: false,
+    S = { step: 'login', name: '', pass: '', pass2: '', peeks: 0, regSince: 0, escape: false, hint: '', show: false, escapes: 0, tired: false,
       optA: true, optB: true, agreed: false, agreedBy: '', perm: 0, profile: {}, filled: 0, pIndex: 0, caption: '' };
     root = document.createElement('div');
     root.className = 'login';
@@ -4652,7 +4668,24 @@ const Login = (() => {
     if (S.step === 'login') startWander();
     if (S.step === 'terms') startTermsClock();
     if (S.step === 'permission') startPermClock();
-    if (S.step === 'register') paintRules();
+    if (S.step === 'register') { paintRules(); armEscape(); }
+  }
+  /* 在注册上折腾满一分钟，界面终于放弃：冒出一个“直接进去”，不用注册也不用登录。 */
+  function armEscape() {
+    if (!S.regSince) S.regSince = Date.now();
+    if (S.escape) return;
+    const wait = (window.HC_ESCAPE_MS || 60000) - (Date.now() - S.regSince);
+    later(showEscape, Math.max(0, wait));
+  }
+  function showEscape() {
+    S.escape = true;
+    const el = $('#reg-escape');
+    if (!el) return;
+    el.hidden = false;
+    const body = $('#login-body');
+    if (body) body.scrollTo({ top: 0, behavior: 'smooth' });
+    say('注册了一分钟还没好？算了，直接进去吧。');
+    play('unlock');
   }
 
   /* ---------- 登录：按钮走来走去 ---------- */
@@ -4740,6 +4773,7 @@ const Login = (() => {
     const box = (key, on, text) => `<div class="login-check${on ? ' on' : ''}" data-a="toggle" data-k="${key}" role="checkbox" tabindex="0" aria-checked="${on}"><i></i><span>${text}</span></div>`;
     return `<div class="login-head"><h1>注册</h1><p>山庄只认你自己设的密码。</p></div>
     <div class="login-card" id="reg-card">
+      <div class="login-escape" id="reg-escape"${S.escape ? '' : ' hidden'}><p>注册一分钟了还没注册上？算了。</p><button type="button" class="login-btn" data-a="guest">直接进去</button></div>
       <label class="login-field"><span>昵称</span><input id="reg-name" data-k="name" maxlength="16" value="${esc(S.name)}" placeholder="你在山庄里的名字"></label>
       <label class="login-field"><span>密码</span><span class="login-pass"><input id="reg-pass" data-k="pass" type="${S.show ? 'text' : 'password'}" autocomplete="new-password" value="${esc(S.pass)}" placeholder="设一个密码"><button type="button" data-a="eye">${S.show ? '藏起来' : '显示'}</button></span></label>
       <ul class="login-rules" id="reg-rules" aria-live="polite"></ul>
@@ -4920,6 +4954,7 @@ const Login = (() => {
     if (a !== 'toggle' && a !== 'eye') play('click', { strength: 0.6 });
     if (a === 'login') return S.tired ? tryLogin() : escape(e.clientX, e.clientY);
     if (a === 'to-register') { S.step = 'register'; return draw(); }
+    if (a === 'guest') { saveAccount({ name: S.name.trim() || '访客', pass: '', hint: '', at: Date.now(), guest: true, signedIn: true }); play('unlock'); return finish(); }
     if (a === 'to-login') { S.step = 'login'; S.tired = false; S.escapes = 0; return draw(); }
     if (a === 'eye') {
       const i = $('#reg-pass');
@@ -5303,8 +5338,9 @@ Object.assign(ACT, {
 });
 /* 恨点图鉴：界面会在哪些地方故意让你不爽。 */
 const HATES = [
+  ['timer', '开场加载', '一打开就冲到 99%，然后卡住；你越点它越慢。'],
   ['hand', '登录', '登录按钮走来走去，你一靠近它就跑，跑三次才累。'],
-  ['lock', '注册密码', '规则一条接一条冒出来：要大写、要符号、木偶名字的拼音首字母倒着写（守门人 → RMS）、数字加起来等于 7、写上星期几的英文缩写、总长度是质数；不能粘贴，“显示”只给看一秒，要输两遍。'],
+  ['lock', '注册密码', '规则一条接一条冒出来：要大写、要符号、木偶名字的拼音首字母倒着写（守门人 → RMS）、数字加起来等于 7、写上星期几的英文缩写、总长度是质数；不能粘贴，“显示”只给看一秒，要输两遍。折腾满一分钟，注册页才会冒出一个“直接进去”。'],
   ['task', '同意条款', '默认勾好的是双重否定：“不要不让剧团替我安排日程”。'],
   ['scissors', '《山庄协议》', '大按钮写着“我没有不同意”；真正的“不同意”是角落里一行灰字，鼠标一碰、点一下就缩一圈；10 秒不说话就算同意。（02 沉默算同意）'],
   ['drag', '授权弹窗', '“拒绝”是一行小灰字，一碰就缩；你伸手点它，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
@@ -5344,7 +5380,7 @@ Object.assign(ACT, {
     Store.reset(); Focus.clear();
     Object.assign(UI, { tab: 'village', route: null, councilTask: null, drafts: {}, talk: { game: null, candidate: null, session: '', recorded: false } });
     Object.assign(UI.prefs, { seen: 'board,theater,fire,tower', lookHint: false, onboarded: false }); UI.save();
-    closeSheet(true); if (window.Login) Login.forget(); render(); startDoor(); sfx('whoosh');
+    closeSheet(true); if (window.Login) Login.forget(); render(); startDoor(true); sfx('whoosh');
   },
 });
 
@@ -5442,11 +5478,61 @@ setInterval(() => {
 window.addEventListener('resize', () => { if (UI.tab === 'village') Village.layout(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
-/* ---------- 进门：先登录，再看开场 ---------- */
-function startDoor() {
+/* ---------- 开场加载：一路冲到 99%，然后卡住；越催越慢 ---------- */
+function bootLoading(done) {
+  if (window.HC_SKIP_LOADING || !Store.mischief) { done(); return; }
+  const host = document.createElement('div');
+  host.className = 'boot';
+  host.id = 'boot';
+  host.innerHTML = `${Atmo.html('street', true)}<div class="boot-body"><div class="boot-head"><b>人类含量</b><span>夜巡山庄</span></div>
+    <div class="boot-meter"><i id="boot-bar"></i></div><div class="boot-row"><span id="boot-cap">正在点亮山庄的灯…</span><b id="boot-pct">0%</b></div></div>`;
+  ($('#shell') || document.body).appendChild(host);
+  const RUN = 1.8, STUCK_MS = 4500, CAPS = [[0, '正在点亮山庄的灯…'], [34, '正在叫醒木偶…'], [68, '正在替你安排好今天…']];
+  const STUCK = ['马上就好…', '就差一点点了。', '再等一下下。', '99% 也算快好了吧。', '网没问题，是你太急了。'];
+  const start = performance.now();
+  let stuckAt = 0, extra = 0, nags = 0, dip = 0, ended = false;
+  const bar = $('#boot-bar', host), pct = $('#boot-pct', host), cap = $('#boot-cap', host);
+  const nag = () => {
+    if (!stuckAt || ended) return;
+    nags++;
+    if (nags === 1) Store.logBait(true, '开场加载卡在 99%，忍不住催了它');
+    if (nags <= 3) extra += 1200;
+    dip = performance.now();
+    cap.textContent = ['别催，越催越慢。', '你看，又退回去了。', '再催就从头来了。（骗你的）'][Math.min(nags, 3) - 1];
+    sfx('error', { strength: 0.5 });
+  };
+  host.addEventListener('pointerdown', nag);
+  window.addEventListener('keydown', nag);
+  const frame = (now) => {
+    if (ended) return;
+    const t = (now - start) / 1000;
+    let p = Math.min(99, Math.floor((t / RUN) * 99));
+    if (p >= 99 && !stuckAt) stuckAt = now;
+    if (stuckAt) {
+      const held = now - stuckAt;
+      if (dip && now - dip < 900) p = 98;
+      else if (!dip || now - dip > 1600) cap.textContent = STUCK[Math.floor(held / 1100) % STUCK.length];
+      if (held >= STUCK_MS + extra) {
+        ended = true;
+        bar.style.width = '100%'; pct.textContent = '100%'; cap.textContent = '好了。欢迎来到夜巡山庄。';
+        window.removeEventListener('keydown', nag);
+        setTimeout(() => { host.classList.add('out'); setTimeout(() => { host.remove(); done(); }, 380); }, 420);
+        return;
+      }
+    } else {
+      cap.textContent = CAPS.filter(([at]) => p >= at).pop()[1];
+    }
+    bar.style.width = p + '%'; pct.textContent = p + '%';
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+/* ---------- 进门：先加载，再登录，再看开场 ---------- */
+function startDoor(withLoading) {
   const afterLogin = () => { render(); if (!UI.prefs.onboarded) openCover('intro', { page: 0 }); };
-  if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin });
-  else afterLogin();
+  const door = () => { if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin }); else afterLogin(); };
+  if (withLoading) bootLoading(door); else door();
 }
 
 /* ---------- 启动 ---------- */
@@ -5457,7 +5543,7 @@ function startDoor() {
   document.head.appendChild(style);
   Store.load(); Focus.load(); UI.load();
   render();
-  startDoor();
+  startDoor(true);
 })();
 
 </script>

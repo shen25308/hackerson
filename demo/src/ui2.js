@@ -318,8 +318,9 @@ Object.assign(ACT, {
 });
 /* 恨点图鉴：界面会在哪些地方故意让你不爽。 */
 const HATES = [
+  ['timer', '开场加载', '一打开就冲到 99%，然后卡住；你越点它越慢。'],
   ['hand', '登录', '登录按钮走来走去，你一靠近它就跑，跑三次才累。'],
-  ['lock', '注册密码', '规则一条接一条冒出来：要大写、要符号、木偶名字的拼音首字母倒着写（守门人 → RMS）、数字加起来等于 7、写上星期几的英文缩写、总长度是质数；不能粘贴，“显示”只给看一秒，要输两遍。'],
+  ['lock', '注册密码', '规则一条接一条冒出来：要大写、要符号、木偶名字的拼音首字母倒着写（守门人 → RMS）、数字加起来等于 7、写上星期几的英文缩写、总长度是质数；不能粘贴，“显示”只给看一秒，要输两遍。折腾满一分钟，注册页才会冒出一个“直接进去”。'],
   ['task', '同意条款', '默认勾好的是双重否定：“不要不让剧团替我安排日程”。'],
   ['scissors', '《山庄协议》', '大按钮写着“我没有不同意”；真正的“不同意”是角落里一行灰字，鼠标一碰、点一下就缩一圈；10 秒不说话就算同意。（02 沉默算同意）'],
   ['drag', '授权弹窗', '“拒绝”是一行小灰字，一碰就缩；你伸手点它，它就和“允许”换位置；倒计时结束默认允许。（01 按钮会换位 · 02 沉默算同意）'],
@@ -359,7 +360,7 @@ Object.assign(ACT, {
     Store.reset(); Focus.clear();
     Object.assign(UI, { tab: 'village', route: null, councilTask: null, drafts: {}, talk: { game: null, candidate: null, session: '', recorded: false } });
     Object.assign(UI.prefs, { seen: 'board,theater,fire,tower', lookHint: false, onboarded: false }); UI.save();
-    closeSheet(true); if (window.Login) Login.forget(); render(); startDoor(); sfx('whoosh');
+    closeSheet(true); if (window.Login) Login.forget(); render(); startDoor(true); sfx('whoosh');
   },
 });
 
@@ -457,11 +458,61 @@ setInterval(() => {
 window.addEventListener('resize', () => { if (UI.tab === 'village') Village.layout(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
-/* ---------- 进门：先登录，再看开场 ---------- */
-function startDoor() {
+/* ---------- 开场加载：一路冲到 99%，然后卡住；越催越慢 ---------- */
+function bootLoading(done) {
+  if (window.HC_SKIP_LOADING || !Store.mischief) { done(); return; }
+  const host = document.createElement('div');
+  host.className = 'boot';
+  host.id = 'boot';
+  host.innerHTML = `${Atmo.html('street', true)}<div class="boot-body"><div class="boot-head"><b>人类含量</b><span>夜巡山庄</span></div>
+    <div class="boot-meter"><i id="boot-bar"></i></div><div class="boot-row"><span id="boot-cap">正在点亮山庄的灯…</span><b id="boot-pct">0%</b></div></div>`;
+  ($('#shell') || document.body).appendChild(host);
+  const RUN = 1.8, STUCK_MS = 4500, CAPS = [[0, '正在点亮山庄的灯…'], [34, '正在叫醒木偶…'], [68, '正在替你安排好今天…']];
+  const STUCK = ['马上就好…', '就差一点点了。', '再等一下下。', '99% 也算快好了吧。', '网没问题，是你太急了。'];
+  const start = performance.now();
+  let stuckAt = 0, extra = 0, nags = 0, dip = 0, ended = false;
+  const bar = $('#boot-bar', host), pct = $('#boot-pct', host), cap = $('#boot-cap', host);
+  const nag = () => {
+    if (!stuckAt || ended) return;
+    nags++;
+    if (nags === 1) Store.logBait(true, '开场加载卡在 99%，忍不住催了它');
+    if (nags <= 3) extra += 1200;
+    dip = performance.now();
+    cap.textContent = ['别催，越催越慢。', '你看，又退回去了。', '再催就从头来了。（骗你的）'][Math.min(nags, 3) - 1];
+    sfx('error', { strength: 0.5 });
+  };
+  host.addEventListener('pointerdown', nag);
+  window.addEventListener('keydown', nag);
+  const frame = (now) => {
+    if (ended) return;
+    const t = (now - start) / 1000;
+    let p = Math.min(99, Math.floor((t / RUN) * 99));
+    if (p >= 99 && !stuckAt) stuckAt = now;
+    if (stuckAt) {
+      const held = now - stuckAt;
+      if (dip && now - dip < 900) p = 98;
+      else if (!dip || now - dip > 1600) cap.textContent = STUCK[Math.floor(held / 1100) % STUCK.length];
+      if (held >= STUCK_MS + extra) {
+        ended = true;
+        bar.style.width = '100%'; pct.textContent = '100%'; cap.textContent = '好了。欢迎来到夜巡山庄。';
+        window.removeEventListener('keydown', nag);
+        setTimeout(() => { host.classList.add('out'); setTimeout(() => { host.remove(); done(); }, 380); }, 420);
+        return;
+      }
+    } else {
+      cap.textContent = CAPS.filter(([at]) => p >= at).pop()[1];
+    }
+    bar.style.width = p + '%'; pct.textContent = p + '%';
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+/* ---------- 进门：先加载，再登录，再看开场 ---------- */
+function startDoor(withLoading) {
   const afterLogin = () => { render(); if (!UI.prefs.onboarded) openCover('intro', { page: 0 }); };
-  if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin });
-  else afterLogin();
+  const door = () => { if (window.Login && !Login.signedIn()) Login.open({ onDone: afterLogin }); else afterLogin(); };
+  if (withLoading) bootLoading(door); else door();
 }
 
 /* ---------- 启动 ---------- */
@@ -472,5 +523,5 @@ function startDoor() {
   document.head.appendChild(style);
   Store.load(); Focus.load(); UI.load();
   render();
-  startDoor();
+  startDoor(true);
 })();
