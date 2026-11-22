@@ -14,6 +14,10 @@ on:
         description: "Launch in the simulator and capture screenshots"
         type: boolean
         default: true
+      scenes:
+        description: "Scenes to capture (space separated); empty = everything in .github/shots.txt"
+        type: string
+        default: ""
 
 concurrency:
   group: ios-build-${{ github.ref }}
@@ -62,7 +66,9 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" build/Debug-iphonesimulator/HumanContent.app
           mkdir -p shots
-          for scene in $(cat .github/shots.txt); do
+          SCENES="${{ inputs.scenes }}"
+          [ -z "$SCENES" ] && SCENES=$(cat .github/shots.txt)
+          for scene in $SCENES; do
             xcrun simctl terminate "$UDID" com.hackerson.humancontent 2>/dev/null || true
             PID=$(xcrun simctl launch "$UDID" com.hackerson.humancontent -shot "$scene" | awk '{print $NF}')
             sleep 6

@@ -26,8 +26,8 @@ enum Backdrop {
     /// 原画偏暗的场景提亮一点。
     var lift: Double {
         switch self {
-        case .street: return 0.08
-        case .square: return 0.04
+        case .street: return 0.15
+        case .square: return 0.07
         default: return 0
         }
     }
@@ -102,9 +102,9 @@ struct Atmosphere: View {
 
     private var scrim: some View {
         LinearGradient(stops: [
-            .init(color: .black.opacity(quiet ? 0.5 : 0.18), location: 0),
-            .init(color: .black.opacity(quiet ? 0.7 : 0.44), location: 0.3),
-            .init(color: .black.opacity(quiet ? 0.86 : 0.72), location: 0.66),
+            .init(color: .black.opacity(quiet ? 0.46 : 0.12), location: 0),
+            .init(color: .black.opacity(quiet ? 0.66 : 0.36), location: 0.3),
+            .init(color: .black.opacity(quiet ? 0.84 : 0.66), location: 0.66),
             .init(color: .black.opacity(quiet ? 0.95 : 0.9), location: 1),
         ], startPoint: .top, endPoint: .bottom)
     }
