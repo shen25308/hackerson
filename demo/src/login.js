@@ -1,7 +1,7 @@
 'use strict';
 /* 登录与注册：一进门就让你领教这座山庄的界面有多讨厌。
    · 登录按钮走来走去，你一靠近它就跑
-   · 注册的密码规则一条接一条冒出来
+   · 注册的密码规则一条接一条冒出来；不能粘贴，“显示”只给看一秒，第一次设好的密码“已经有人在用”
    · 同意条款用双重否定，"同意"和"不同意"的按钮反着放，沉默十秒算同意
    · 授权弹窗的"允许"和"拒绝"会换位，倒计时结束默认允许
    · 资料完整度永远差一点到 100%
@@ -9,15 +9,19 @@
 const Login = (() => {
   const KEY = 'human-content-demo-account-v1';
   const PUPPET_NAMES = ['守门人', '药师', '寻迹人', '琴师', '织梦人', '双生木偶', '灰毛', '戴冠者', '玫瑰夫人'];
+  const REVERSED = PUPPET_NAMES.map((n) => [...n].reverse().join(''));
+  const USED_BY = ['玫瑰夫人', '戴冠者', '灰毛', '双生木偶'];
+  const isPrime = (n) => { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; };
   const WEEK = '周' + '日一二三四五六'[new Date().getDay()];
   const RULES = [
     { t: '至少 8 个字符', ok: (p) => [...p].length >= 8 },
     { t: '要有一个数字', ok: (p) => /\d/.test(p) },
     { t: '要有一个大写字母', ok: (p) => /[A-Z]/.test(p) },
     { t: '要有一个符号，比如 ! 或 #', ok: (p) => /[!-/:-@[-`{-~！？。，、；：]/.test(p) },
-    { t: '要包含一位木偶的名字（守门人、药师、琴师……）', ok: (p) => PUPPET_NAMES.some((n) => p.includes(n)) },
+    { t: '要包含一位木偶的名字，但要倒过来写（“守门人”写成“人门守”）', ok: (p) => REVERSED.some((n) => p.includes(n)) },
     { t: '所有数字加起来要等于 7', ok: (p) => (p.match(/\d/g) || []).reduce((n, d) => n + Number(d), 0) === 7 },
     { t: '要写上今天是星期几（写成“周一”这样）', ok: (p) => p.includes(WEEK) },
+    { t: (p) => `总长度要是质数（现在是 ${[...p].length} 个字）`, ok: (p) => isPrime([...p].length) },
   ];
   const CLAUSES = [
     '第一条　你在山庄里做的每一个决定，剧团都有权替你再做一次。',
@@ -64,7 +68,7 @@ const Login = (() => {
   function open(opts = {}) {
     if (root) return false;
     onDone = opts.onDone || null;
-    S = { step: 'login', name: '', pass: '', hint: '', show: false, escapes: 0, tired: false,
+    S = { step: 'login', name: '', pass: '', pass2: '', used: [], usedBy: '', peeks: 0, hint: '', show: false, escapes: 0, tired: false,
       optA: true, optB: true, agreed: false, agreedBy: '', perm: 0, profile: {}, filled: 0, pIndex: 0, caption: '' };
     root = document.createElement('div');
     root.className = 'login';
@@ -76,6 +80,8 @@ const Login = (() => {
     root.addEventListener('pointerdown', onPointerDown, true);
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('keydown', onKey);
+    root.addEventListener('paste', onPaste, true);
+    root.addEventListener('drop', onPaste, true);
     draw();
     play('whoosh');
     return true;
@@ -202,6 +208,7 @@ const Login = (() => {
       <label class="login-field"><span>昵称</span><input id="reg-name" data-k="name" maxlength="16" value="${esc(S.name)}" placeholder="你在山庄里的名字"></label>
       <label class="login-field"><span>密码</span><span class="login-pass"><input id="reg-pass" data-k="pass" type="${S.show ? 'text' : 'password'}" autocomplete="new-password" value="${esc(S.pass)}" placeholder="设一个密码"><button type="button" data-a="eye">${S.show ? '藏起来' : '显示'}</button></span></label>
       <ul class="login-rules" id="reg-rules" aria-live="polite"></ul>
+      <label class="login-field" id="reg-pass2-wrap" hidden><span>再输一遍密码（不能粘贴）</span><input id="reg-pass2" data-k="pass2" type="password" autocomplete="new-password" value="${esc(S.pass2)}" placeholder="一个字一个字敲"></label>
       <label class="login-field"><span>密码提示（忘了的时候给你看）</span><input id="reg-hint" data-k="hint" maxlength="30" value="${esc(S.hint)}" placeholder="比如：我最喜欢的木偶"></label>
       <div class="login-checks">
         ${box('optA', S.optA, '不要不让剧团替我安排每天的日程')}
@@ -217,23 +224,35 @@ const Login = (() => {
     if (!ul) return;
     const p = S.pass;
     const shown = [];
+    let all = true;
     for (const r of RULES) {
       const ok = r.ok(p);
-      shown.push(`<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'} ${r.t}</li>`);
-      if (!ok) break;
+      shown.push(`<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'} ${typeof r.t === 'function' ? r.t(p) : r.t}</li>`);
+      if (!ok) { all = false; break; }
     }
+    if (all && S.used.length) { const fresh = !S.used.includes(p); shown.push(`<li class="${fresh ? 'ok' : 'no'}">${fresh ? '✓' : '✗'} 不能和别人在用的密码一样（刚才那个，${S.usedBy}在用）</li>`); }
     if (!p) shown.length = 0;
+    const wrap = $('#reg-pass2-wrap');
+    if (wrap) wrap.hidden = !passOK();
     const count = shown.length;
     if (S.lastRules !== undefined && count > S.lastRules) play('glitch', { strength: 0.5 });
     S.lastRules = count;
     ul.innerHTML = shown.join('');
   }
-  const passOK = () => RULES.every((r) => r.ok(S.pass));
+  const passOK = () => RULES.every((r) => r.ok(S.pass)) && !S.used.includes(S.pass);
   function tryRegister() {
     const name = S.name.trim();
     if (!name) { say('先给自己起个名字。'); shake('#reg-name'); play('error'); return; }
     if (!passOK()) { say('密码还不够好。看看下面的提示。'); shake('#reg-rules'); play('error'); return; }
+    if (S.pass2 !== S.pass) { say(S.pass2 ? '两次输的不一样。' : '再输一遍密码。'); shake('#reg-pass2-wrap'); play('error'); return; }
     if (!S.agreed) { say('要先同意《山庄协议》。'); shake('.login-checks'); play('error'); return; }
+    if (!S.used.length) {
+      S.used.push(S.pass); S.usedBy = USED_BY[Math.floor(Math.random() * USED_BY.length)]; S.pass2 = '';
+      const c = $('#reg-pass2'); if (c) c.value = '';
+      paintRules();
+      say(`这个密码，${S.usedBy}已经在用了。换一个吧。`); shake('#reg-rules'); play('error');
+      return;
+    }
     saveAccount({ name, pass: hash(S.pass), hint: S.hint.trim(), at: Date.now(), signedIn: false });
     bait(S.optA, S.optA ? '注册时，没看出“不要不让剧团替我安排日程”是双重否定' : '注册时，取消了“不要不让剧团替我安排日程”');
     bait(S.optB, S.optB ? '注册时，留着“我不拒绝每天接收 3 次推送”没取消' : '注册时，取消了“我不拒绝每天接收 3 次推送”');
@@ -342,12 +361,22 @@ const Login = (() => {
   }
 
   /* ---------- 事件 ---------- */
+  function onPaste(e) {
+    const id = e.target && e.target.id;
+    if (!['reg-pass', 'reg-pass2', 'login-pass'].includes(id)) return;
+    e.preventDefault();
+    say('为了你的安全，密码不能粘贴。一个字一个字敲吧。');
+    shake('#' + id); play('error');
+  }
   function onInput(e) {
     const k = e.target.dataset.k;
     if (!k) return;
     S[k] = e.target.value;
     if (!e.isComposing) play('type', { strength: 0.3 });
-    if (k === 'pass' && S.step === 'register') paintRules();
+    if (k === 'pass' && S.step === 'register') {
+      paintRules();
+      if (!S.saidBack && PUPPET_NAMES.some((n) => S.pass.includes(n)) && !REVERSED.some((n) => S.pass.includes(n))) { S.saidBack = true; say('木偶的名字要倒过来写。'); }
+    }
   }
   function onKey(e) {
     if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('login-check')) { e.preventDefault(); e.target.click(); return; }
@@ -363,7 +392,14 @@ const Login = (() => {
     if (a === 'login') return S.tired ? tryLogin() : escape(e.clientX, e.clientY);
     if (a === 'to-register') { S.step = 'register'; return draw(); }
     if (a === 'to-login') { S.step = 'login'; S.tired = false; S.escapes = 0; return draw(); }
-    if (a === 'eye') { S.show = !S.show; play('tick'); const i = $('#reg-pass'); if (i) i.type = S.show ? 'text' : 'password'; b.textContent = S.show ? '藏起来' : '显示'; return; }
+    if (a === 'eye') {
+      const i = $('#reg-pass');
+      if (!i || i.type === 'text') return;
+      play('tick'); i.type = 'text'; b.textContent = '1 秒';
+      if (++S.peeks === 1) say('只给你看一秒。');
+      later(() => { const j = $('#reg-pass'), e2 = $('[data-a="eye"]'); if (j) j.type = 'password'; if (e2) e2.textContent = '显示'; }, 1000);
+      return;
+    }
     if (a === 'toggle') {
       const k = b.dataset.k;
       if (k === 'agreed' && !S.agreed) { S.step = 'terms'; play('paper'); return draw(); }

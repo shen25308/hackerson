@@ -347,6 +347,7 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .login-head p { color: var(--dim); font-size: 14px; margin-top: 4px; }
 .login-card { display: flex; flex-direction: column; gap: 14px; padding: 18px 16px; border-radius: 18px; background: rgba(8, 6, 11, 0.62); border: 1px solid rgba(255, 255, 255, 0.08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .login-field { display: flex; flex-direction: column; gap: 7px; }
+.login-field[hidden] { display: none; }
 .login-field > span:first-child { font-size: 14px; font-weight: 550; color: var(--dim); }
 .login-field input, .login-input { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.13); color: var(--text); caret-color: var(--ember); font-size: 15px; min-width: 0; }
 .login-field input:focus, .login-input:focus { outline: 1px solid var(--ember); }
