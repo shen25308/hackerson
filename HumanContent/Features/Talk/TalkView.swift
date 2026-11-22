@@ -347,7 +347,7 @@ struct TalkSeats: View {
 
     private func chip(_ s: TalkSeatInfo) -> some View {
         let keeper = s.role == "wolf"
-        let fill = keeper ? Theme.rose.opacity(0.22) : s.me ? Theme.ember.opacity(0.18) : Color.white.opacity(0.06)
+        let fill = keeper ? Theme.rose.opacity(0.22) : s.me ? Theme.ember.opacity(0.18) : Color.black.opacity(0.45)
         return VStack(spacing: 3) {
             Text("\(s.seat)号").font(.caption.weight(.bold)).foregroundStyle(s.me ? Theme.ember : Theme.text)
             Text(s.name).font(.caption).foregroundStyle(Theme.text).strikethrough(!s.alive).lineLimit(1).minimumScaleFactor(0.7)
@@ -517,7 +517,7 @@ struct TalkTargets: View {
                     .font(.subheadline)
                     .foregroundStyle(chosen ? Theme.ink : Theme.text)
                     .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(chosen ? Theme.ember : Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(chosen ? Theme.ember : Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(chosen ? .isSelected : [])

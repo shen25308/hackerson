@@ -64,7 +64,7 @@ struct TasksView: View {
             .page()
             .padding(.vertical, 12)
         }
-        .nightBackground()
+        .nightBackground(.street)
         .navigationTitle("今天的约定")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -82,7 +82,9 @@ struct TasksView: View {
             #if DEBUG
             if Screenshots.scene == "add" { adding = true }
             #endif
+            openAddIfAsked()
         }
+        .onChange(of: stage.wantsAdd) { _, _ in openAddIfAsked() }
         .sheet(isPresented: $adding) {
             AddQuestSheet { id in stage.taskPath = [.detail(id)] }
                 .preferredColorScheme(.dark)
@@ -90,6 +92,14 @@ struct TasksView: View {
         .sheet(item: $completing) { quest in
             CompleteSheet(id: quest.id).preferredColorScheme(.dark)
         }
+    }
+
+    private func openAddIfAsked() {
+        guard stage.wantsAdd else { return }
+        stage.wantsAdd = false
+        guard !store.closed else { return }
+        // 等开场或换页的转场结束，再弹出面板。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { adding = true }
     }
 
     private func summary(_ day: Day, _ required: [Quest]) -> String {
@@ -219,7 +229,7 @@ struct QuestDetailView: View {
                 .padding(.vertical, 12)
             }
             .scrollDismissesKeyboard(.interactively)
-            .nightBackground()
+            .nightBackground(.street)
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 step = quest.step
@@ -241,7 +251,7 @@ struct QuestDetailView: View {
             EmptyNote(title: "这项任务不在今天。", action: "回到任务板") { stage.taskPath = [] }
                 .page()
                 .frame(maxHeight: .infinity, alignment: .top)
-                .nightBackground()
+                .nightBackground(.street)
         }
     }
 

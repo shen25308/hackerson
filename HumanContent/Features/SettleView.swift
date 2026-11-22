@@ -25,7 +25,7 @@ struct SettleView: View {
             .padding(.vertical, 12)
         }
         .scrollDismissesKeyboard(.interactively)
-        .nightBackground()
+        .nightBackground(.chapel)
         .navigationTitle(day.closed ? "今天已入档" : "收工之前")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reflection = day.reflection }

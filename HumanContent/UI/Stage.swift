@@ -55,6 +55,10 @@ final class Stage: ObservableObject {
     @Published var lab: LabEntry?
     @Published var toast: String?
     @Published var flash: Flash?
+    /// 开场引导是否正在显示。
+    @Published var intro = false
+    /// 请任务板直接打开“新增待办”。
+    @Published var wantsAdd = false
 
     private var toastWork: DispatchWorkItem?
     private var flashWork: DispatchWorkItem?

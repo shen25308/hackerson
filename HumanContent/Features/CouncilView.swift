@@ -8,7 +8,7 @@ struct CouncilRoot: View {
             Group {
                 if stage.councilMode == .slips { SlipsView() } else { TalkView() }
             }
-            .nightBackground()
+            .nightBackground(.square)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -135,7 +135,7 @@ struct SlipsView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 9)
                     .foregroundStyle(i == n ? Theme.ink : Theme.text)
-                    .background(i == n ? Theme.ember : Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(i == n ? Theme.ember : Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.tap(.swap))
                 .disabled(locked)
@@ -289,7 +289,7 @@ struct CutSheet: View {
     let clock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        SheetScaffold(title: "剪掉哪一张") {
+        SheetScaffold(title: "剪掉哪一张", backdrop: .square) {
             if let quest = store.quest(id) {
                 ForEach(0..<3, id: \.self) { seat in
                     Button {

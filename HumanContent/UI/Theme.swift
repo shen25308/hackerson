@@ -66,7 +66,8 @@ struct QuietButtonStyle: ButtonStyle {
             .foregroundStyle(Theme.text)
             .padding(.horizontal, 16)
             .frame(maxWidth: fill ? .infinity : nil, minHeight: 46)
-            .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(Color.black.opacity(configuration.isPressed ? 0.3 : 0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.text.opacity(0.16), lineWidth: 1))
             .opacity(isEnabled ? 1 : 0.35)
             .onChange(of: configuration.isPressed) { _, pressed in
                 if pressed { sfx(.click, strength: 0.7) }
@@ -142,7 +143,13 @@ extension View {
         self
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background {
+                // 半透的暗玻璃：背后的山庄隐约透出来。
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.black.opacity(0.42)))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.07), lineWidth: 1))
+            }
     }
 
     /// 页面底色与统一的左右留白。
@@ -152,8 +159,9 @@ extension View {
             .padding(.horizontal, 18)
     }
 
-    func nightBackground() -> some View {
-        self.background(Theme.night.ignoresSafeArea())
+    /// 页面背景：夜里的山庄。quiet 用在弹出面板里。
+    func nightBackground(_ backdrop: Backdrop = .chapel, quiet: Bool = false) -> some View {
+        self.background { Atmosphere(backdrop: backdrop, quiet: quiet) }
     }
 }
 
@@ -230,7 +238,8 @@ struct InputStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(12)
-            .background(Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1))
             .foregroundStyle(Theme.text)
             .tint(Theme.ember)
     }
@@ -248,6 +257,7 @@ extension View {
 /// 弹出的半屏面板统一用这个壳：标题、关闭按钮、可滚动的内容。
 struct SheetScaffold<Content: View>: View {
     let title: String
+    var backdrop: Backdrop = .chapel
     @Environment(\.dismiss) private var dismiss
     @ViewBuilder var content: Content
 
@@ -262,10 +272,10 @@ struct SheetScaffold<Content: View>: View {
                 .padding(.bottom, 30)
             }
             .scrollDismissesKeyboard(.interactively)
-            .nightBackground()
+            .nightBackground(backdrop, quiet: true)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Theme.night, for: .navigationBar)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("关闭") {

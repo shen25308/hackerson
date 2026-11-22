@@ -41,7 +41,7 @@ struct SoundSheet: View {
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(Theme.text)
                     .frame(maxWidth: .infinity, minHeight: 42)
-                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .buttonStyle(.plain)
                 }
             }
@@ -153,6 +153,11 @@ struct HelpSheet: View {
             }
             .buttonStyle(.quiet)
             Button("声音与音乐") { stage.sheet = .sound }.buttonStyle(.quiet)
+            Button("重看开场") {
+                stage.sheet = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { stage.intro = true }
+            }
+            .buttonStyle(.quiet)
             if !store.storageOK {
                 Text("最近一次保存没成功，请到“回声”里导出备份。").font(.footnote.weight(.medium)).foregroundStyle(Theme.rose)
             }

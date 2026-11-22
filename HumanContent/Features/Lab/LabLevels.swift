@@ -725,7 +725,7 @@ struct LabWaitView: View {
         }
         .padding(14)
         .frame(maxWidth: 250, alignment: .leading)
-        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .scaleEffect(model.videoScale, anchor: .topLeading)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1277,7 +1277,7 @@ struct LabArgueView: View {
             .foregroundStyle(message.mine ? Theme.ink : Theme.text)
             .fixedSize(horizontal: false, vertical: true)
             .padding(12)
-            .background(message.mine ? Theme.ember : Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(message.mine ? Theme.ember : Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .frame(maxWidth: .infinity, alignment: message.mine ? .trailing : .leading)
             .padding(message.mine ? .leading : .trailing, 36)
     }

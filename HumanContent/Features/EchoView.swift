@@ -49,7 +49,7 @@ struct EchoView: View {
             .page()
             .padding(.vertical, 12)
         }
-        .nightBackground()
+        .nightBackground(.chapel)
         .navigationTitle("行为回声")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

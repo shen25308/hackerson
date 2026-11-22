@@ -29,6 +29,7 @@ struct RootView: View {
     @EnvironmentObject private var sound: SoundEngine
     @EnvironmentObject private var music: MusicPlayer
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("onboarded") private var onboarded = false
 
     let minute = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -77,6 +78,23 @@ struct RootView: View {
         .fullScreenCover(item: $stage.lab) { entry in
             LabView(entry: entry).preferredColorScheme(.dark)
         }
+        .fullScreenCover(isPresented: $stage.intro) {
+            OnboardingView(startPage: introStart) { exit in
+                onboarded = true
+                stage.intro = false
+                switch exit {
+                case .write:
+                    stage.go(.tasks)
+                    stage.wantsAdd = true
+                case .demo:
+                    store.enterDemo()
+                    stage.go(.tasks)
+                case .enter:
+                    break
+                }
+            }
+            .preferredColorScheme(.dark)
+        }
         .onChange(of: stage.tab) { _, _ in sfx(.nav) }
         .onChange(of: sound.enabled) { _, on in music.setMuted(!on) }
         .onChange(of: scenePhase) { _, phase in
@@ -92,8 +110,17 @@ struct RootView: View {
             if store.loadWarning { stage.say("原有记录没能读出来，现在是一座空山庄。") }
             #if DEBUG
             Screenshots.apply(store: store, stage: stage)
+            if Screenshots.scene != nil { return }
             #endif
+            if !onboarded { stage.intro = true }
         }
+    }
+
+    private var introStart: Int {
+        #if DEBUG
+        if let scene = Screenshots.scene, scene.hasPrefix("intro-") { return Int(scene.dropFirst(6)) ?? 0 }
+        #endif
+        return 0
     }
 
     private func newDayCheck() {
@@ -133,7 +160,7 @@ struct TabChrome: ViewModifier {
             }
             .toolbarBackground(Theme.night, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
-            .toolbarBackground(Theme.night, for: .navigationBar)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
     }
 }
 

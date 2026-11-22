@@ -452,7 +452,7 @@ struct LabView: View {
 
     var body: some View {
         ZStack {
-            Theme.night.ignoresSafeArea()
+            Atmosphere(backdrop: .docks, quiet: true)
             VStack(spacing: 0) {
                 LabHUD(lab: lab, leave: leave)
                 ScrollView {

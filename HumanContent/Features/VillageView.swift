@@ -13,6 +13,9 @@ struct VillageView: View {
     @State private var lastTick = 0
     @State private var suppressTapUntil = Date.distantPast
     @State private var denied = 0
+    @State private var nudge = false
+    @AppStorage("map.seen") private var seenRaw = "board,theater,fire,tower"
+    @AppStorage("hint.look") private var lookHintSeen = false
 
     private struct Puppet: Identifiable {
         let id: String
@@ -205,6 +208,7 @@ struct VillageView: View {
                 if anchor == nil {
                     anchor = (yaw, pitch)
                     if selected != nil { selected = nil }
+                    if !lookHintSeen { lookHintSeen = true }
                 }
                 guard let start = anchor else { return }
                 yaw = wrap(start.yaw - Double(value.translation.width) * 0.14)
@@ -330,10 +334,21 @@ struct VillageView: View {
             .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
             VStack(spacing: 10) {
+                if !lookHintSeen {
+                    Label("左右拖动，环视山庄", systemImage: "hand.draw")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Theme.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Theme.night.opacity(0.7), in: Capsule())
+                        .offset(x: nudge ? 14 : -14)
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { nudge = true }
+                        }
+                        .padding(.bottom, 6)
+                }
                 Text("人类含量").font(Theme.brush(34)).foregroundStyle(Theme.text).shadow(color: .black, radius: 8)
-                Text(store.closed ? "今天已收工" : "今日待办 \(store.pending) 项 · \(Rules.stageName(store.s))")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.text.opacity(0.8))
+                leadButton
                 HStack(spacing: 8) {
                     chip("map", "地图") { stage.sheet = .map }
                     chip("theatermasks", "剧场") { stage.sheet = .labMenu }
@@ -345,6 +360,57 @@ struct VillageView: View {
             }
             .padding(.bottom, 12)
         }
+    }
+
+    // MARK: 引路
+
+    private struct Lead {
+        let text: String
+        let symbol: String
+        let action: () -> Void
+    }
+
+    /// 眼下最值得做的一件事。
+    private var lead: Lead {
+        let seen = Set(seenRaw.split(separator: ",").map(String.init))
+        let fresh = Atlas.places.filter { store.isOpen($0.id) && !seen.contains($0.id) }.max { $0.need < $1.need }
+        if let fresh, !store.unlockAll {
+            return Lead(text: "\(fresh.name)的雾散了，去地图看看", symbol: "map") { stage.sheet = .map }
+        }
+        if store.closed {
+            return Lead(text: "今天已收工，翻翻今天的回声", symbol: "waveform") { stage.go(.echo) }
+        }
+        if store.today.tasks.isEmpty {
+            return Lead(text: "先去任务板，写下今天的一件事", symbol: "pencil.line") {
+                stage.go(.tasks)
+                stage.wantsAdd = true
+            }
+        }
+        if let next = store.today.tasks.first(where: { !$0.done }) {
+            return Lead(text: "下一步：\(next.title)", symbol: "figure.walk") { stage.openTask(next.id) }
+        }
+        return Lead(text: "今天的事都登记了，可以收工", symbol: "moon.zzz") { stage.openSettle() }
+    }
+
+    private var leadButton: some View {
+        let next = self.lead
+        return Button {
+            sfx(.open)
+            next.action()
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: next.symbol).font(.footnote.weight(.semibold))
+                Text(next.text).font(.subheadline.weight(.medium)).lineLimit(1)
+                Image(systemName: "chevron.right").font(.caption2.weight(.bold))
+            }
+            .foregroundStyle(Theme.ink)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 38)
+            .background(Theme.ember, in: Capsule())
+            .shadow(color: .black.opacity(0.5), radius: 8, y: 3)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 18)
     }
 
     private func chip(_ symbol: String, _ title: String, action: @escaping () -> Void) -> some View {

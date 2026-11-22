@@ -52,6 +52,7 @@ enum Screenshots {
         case "puppets": stage.tab = .puppets
         case "echo": stage.tab = .echo
         default:
+            if scene.hasPrefix("intro-") { stage.intro = true }
             if scene.hasPrefix("lab-") { stage.startLab(level: String(scene.dropFirst(4)), task: first) }
         }
     }

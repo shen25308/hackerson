@@ -26,7 +26,7 @@ struct PuppetsView: View {
             .page()
             .padding(.vertical, 12)
         }
-        .nightBackground()
+        .nightBackground(.docks)
         .navigationTitle("木偶工坊")
         .fullScreenCover(isPresented: $drawing) {
             DrawView().preferredColorScheme(.dark)
@@ -105,7 +105,7 @@ struct PuppetsView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .foregroundStyle(i <= tier ? Theme.ink : Theme.dim)
-                    .background(i <= tier ? Theme.ember : Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(i <= tier ? Theme.ember : Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
             }
             Button("去火堆旁坐一局") { stage.openTalk(online: false) }.buttonStyle(.quiet)
@@ -193,7 +193,7 @@ struct DrawView: View {
             .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .nightBackground()
+        .nightBackground(.docks, quiet: true)
         .onAppear {
             withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { sway = true }
         }

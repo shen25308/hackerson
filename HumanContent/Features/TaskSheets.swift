@@ -23,7 +23,7 @@ struct AddQuestSheet: View {
     private let suffixes = ["，等有空再说", "，先收藏几个教程再开始", "，让 AI 帮我全做完"]
 
     var body: some View {
-        SheetScaffold(title: "答应自己一件事") {
+        SheetScaffold(title: "答应自己一件事", backdrop: .street) {
             Field(label: "具体要完成什么") {
                 TextField("把第一版方案发给一个人", text: $title)
                     .focused($typing)
@@ -147,7 +147,7 @@ struct CompleteSheet: View {
     }
 
     var body: some View {
-        SheetScaffold(title: "现实里做完了吗") {
+        SheetScaffold(title: "现实里做完了吗", backdrop: .street) {
             if let quest = store.quest(id) {
                 Text("「\(quest.title)」").font(Theme.title(21)).foregroundStyle(Theme.text)
                 if store.mischief { bait }
