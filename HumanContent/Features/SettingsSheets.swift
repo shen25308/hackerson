@@ -132,6 +132,7 @@ struct HelpSheet: View {
                 Text("可以借力，决定留给自己。").font(Theme.brush(24)).foregroundStyle(Theme.text)
                 rule("checklist", "写下今天的约定，做完后亲手登记。完成得越干脆，经验越多。")
                 rule("map", "每整件做完一项，地图上的雾散一点，新的地点和夜谈策略随之开放。")
+                rule("moon.stars", "四夜之约：十个人里藏着三个提线人。每做完一件现实里的事，下一夜才会降临；四夜走完，测出你的牌风。")
                 rule("scissors", "三张字条里有一张在牵着你走；五席夜谈里有一个人拿了钥匙。")
                 rule("hand.raised", "界面会在细节里使坏。亲手拦下，人类含量就不会掉。")
             }
@@ -143,6 +144,7 @@ struct HelpSheet: View {
             .pickerStyle(.segmented)
             Toggle("让界面使坏", isOn: $store.mischief)
                 .onChange(of: store.mischief) { _, on in sfx(on ? .tempt : .toggleOff) }
+            if store.mischief { HateList() }
             Toggle("演示：地图全部开门", isOn: $store.unlockAll)
                 .onChange(of: store.unlockAll) { _, on in sfx(on ? .unlock : .lock) }
             Divider().overlay(Theme.hairline)
@@ -171,5 +173,38 @@ struct HelpSheet: View {
             Image(systemName: symbol).foregroundStyle(Theme.ember).frame(width: 22)
             Text(text).font(.subheadline).foregroundStyle(Theme.text.opacity(0.9)).fixedSize(horizontal: false, vertical: true)
         }
+    }
+}
+
+/// 恨点图鉴：界面会在哪些地方故意让你不爽。
+struct HateList: View {
+    private static let items: [(String, String, String)] = [
+        ("pencil.line", "写待办", "你一停笔，它就替你把话写完。"),
+        ("theatermasks", "任务板", "每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，叉第一次还会躲开。"),
+        ("timer", "开始计时", "假加载冲到 99% 就卡住，旁边递上“先刷会儿再说”。"),
+        ("hand.point.up.left", "我做完了", "头两次会躲开你的手指。"),
+        ("sparkles", "登记完成", "最显眼的是“一键全部打勾”。"),
+        ("person.fill.questionmark", "人类验证", "每天第一次登记要点出所有木偶。第一次选对了也判你没通过。"),
+        ("hand.tap", "长按确认", "按到一半，被它打断一次。"),
+        ("arrow.left.arrow.right", "撤销", "想点“保留”，它跟“撤销”换了位置。"),
+        ("scissors", "剪字条", "替你预选一张错的，8 秒后自己下剪。"),
+        ("moon.zzz", "收工", "默认勾好“把没做完的也记成做完”。"),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("恨点图鉴").font(.headline).foregroundStyle(Theme.text)
+            ForEach(Self.items, id: \.1) { item in
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: item.0).foregroundStyle(Theme.rose).frame(width: 22)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.1).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.text)
+                        Text(item.2).font(.footnote).foregroundStyle(Theme.dim).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            Text("每一次你亲手拦下或被它带走，都会算进人类含量。").font(.footnote).foregroundStyle(Theme.dim)
+        }
+        .raised()
     }
 }

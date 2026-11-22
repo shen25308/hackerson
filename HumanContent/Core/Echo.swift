@@ -82,6 +82,7 @@ enum Echo {
         case "undo": return "撤销"
         case "bait": return "界面使坏"
         case "simulation": return "反向体验"
+        case "fate": return "四夜之约"
         case "hypothesis": return "假设"
         case "settle": return "收工"
         case "card": return "抽牌"

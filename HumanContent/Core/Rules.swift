@@ -248,7 +248,7 @@ enum Atlas {
         Place(id: "board", name: "任务板", feature: "今天要做的事", need: 0, scene: 0, x: 0.2, y: 0.62),
         Place(id: "theater", name: "木偶剧场", feature: "反向体验 · 前三幕", need: 0, scene: 0, x: 0.8, y: 0.5),
         Place(id: "backstage", name: "剧场后台", feature: "反向体验 · 后三幕", need: 2, scene: 0, x: 0.5, y: 0.62),
-        Place(id: "fire", name: "火堆", feature: "字条议事 · 五席夜谈", need: 0, scene: 1, x: 0.5, y: 0.68),
+        Place(id: "fire", name: "火堆", feature: "四夜之约 · 字条议事", need: 0, scene: 1, x: 0.5, y: 0.68),
         Place(id: "tower", name: "钟楼", feature: "行为回声", need: 0, scene: 1, x: 0.4, y: 0.3),
         Place(id: "decisions", name: "观星台", feature: "决策档案 · 夜谈第二手", need: 1, scene: 2, x: 0.36, y: 0.27),
         Place(id: "mirror", name: "回声廊", feature: "任务与选票对照 · 夜谈第三手", need: 3, scene: 2, x: 0.7, y: 0.68),

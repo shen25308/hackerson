@@ -384,6 +384,11 @@ final class Store: ObservableObject {
         }
     }
 
+    /// 四夜之约走完一局，记下测出的结果。
+    func logFate(_ text: String) {
+        log("fate", text)
+    }
+
     func logSimulation(task: String?, records: [SimRecord], elapsed: Int) {
         mutate { l in
             var e = LogEvent(date: l.days.last?.id ?? Clock.dayID(), time: Clock.timeLabel(), type: "simulation",

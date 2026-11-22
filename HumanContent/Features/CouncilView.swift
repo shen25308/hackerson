@@ -6,7 +6,11 @@ struct CouncilRoot: View {
     var body: some View {
         NavigationStack {
             Group {
-                if stage.councilMode == .slips { SlipsView() } else { TalkView() }
+                switch stage.councilMode {
+                case .slips: SlipsView()
+                case .fate: FateTab()
+                case .talk: TalkView()
+                }
             }
             .nightBackground(.square)
             .navigationBarTitleDisplayMode(.inline)
@@ -14,14 +18,28 @@ struct CouncilRoot: View {
                 ToolbarItem(placement: .principal) {
                     Picker("议事方式", selection: $stage.councilMode) {
                         Text("三张字条").tag(CouncilMode.slips)
+                        Text("四夜之约").tag(CouncilMode.fate)
                         Text("五席夜谈").tag(CouncilMode.talk)
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 220)
+                    .frame(width: 300)
                 }
             }
         }
         .tabChrome()
+    }
+}
+
+/// 议事里的四夜之约入口。
+struct FateTab: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                FateEntry()
+            }
+            .page()
+            .padding(.vertical, 12)
+        }
     }
 }
 

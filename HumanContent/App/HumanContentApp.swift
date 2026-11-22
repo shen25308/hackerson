@@ -78,6 +78,9 @@ struct RootView: View {
         .fullScreenCover(item: $stage.lab) { entry in
             LabView(entry: entry).preferredColorScheme(.dark)
         }
+        .fullScreenCover(isPresented: $stage.fateOpen) {
+            FateView().preferredColorScheme(.dark)
+        }
         .fullScreenCover(isPresented: $stage.intro) {
             OnboardingView(startPage: introStart) { exit in
                 onboarded = true

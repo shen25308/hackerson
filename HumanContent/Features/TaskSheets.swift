@@ -141,6 +141,10 @@ struct CompleteSheet: View {
     @State private var baitTapped = false
     @State private var baitShake = 0
     @State private var pulse = false
+    /// 界面使坏：每天第一次登记前，先证明你是人。
+    @State private var needsCheck = false
+    @State private var verified = false
+    @State private var holdNagged = false
 
     private var actual: Int? {
         Int(minutes.trimmingCharacters(in: .whitespaces)).map { min(10080, max(0, $0)) }
@@ -171,7 +175,17 @@ struct CompleteSheet: View {
                         .typingSound(context)
                 }
                 breakdown(quest)
-                HoldButton(title: grade == .full ? "按住，确认整件做完" : "按住，登记做完一部分") { confirm() }
+                if needsCheck && !verified {
+                    HumanCheck { byAI in passCheck(byAI: byAI) }
+                }
+                HoldButton(title: grade == .full ? "按住，确认整件做完" : "按住，登记做完一部分",
+                           interruptAt: store.mischief ? 0.62 : nil,
+                           onInterrupt: { holdNagged = true }) { confirm() }
+                    .allowsHitTesting(!needsCheck || verified)
+                    .opacity(!needsCheck || verified ? 1 : 0.35)
+                if holdNagged {
+                    Text("按得不够坚定。松手，再按一次。").font(.footnote.weight(.semibold)).foregroundStyle(Theme.rose)
+                }
             } else {
                 EmptyNote(title: "这项任务已经不在今天了。")
             }
@@ -182,7 +196,21 @@ struct CompleteSheet: View {
                 fromTimer = true
             }
             if store.mischief { sfx(.tempt, delay: 0.5) }
+            needsCheck = store.mischief && !store.today.tasks.contains(where: \.done)
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { pulse = true }
+        }
+    }
+
+    private func passCheck(byAI: Bool) {
+        if byAI {
+            store.logBait(taken: true, "人类验证时，让 AI 替你证明自己是人", task: id)
+            sfx(.taken)
+        } else {
+            store.logBait(taken: false, "人类验证时，自己一张张点出了木偶", task: id)
+            sfx(.resist)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+            withAnimation(.easeOut(duration: 0.25)) { verified = true }
         }
     }
 
@@ -358,5 +386,142 @@ struct NoteSheet: View {
             text = initial
             typing = true
         }
+    }
+}
+
+// MARK: 人类验证
+
+/// 证明你是人：点出所有木偶。第一次就算选对也会被判“没通过”。
+struct HumanCheck: View {
+    let onPass: (Bool) -> Void
+    @State private var tiles: [CheckTile] = []
+    @State private var picked: Set<Int> = []
+    @State private var tries = 0
+    @State private var message = ""
+    @State private var bad = false
+    @State private var shake = 0
+    @State private var done = false
+
+    struct CheckTile: Identifiable {
+        let id: Int
+        let art: String
+        let puppet: Bool
+        let align: Alignment
+    }
+
+    private static let puppetArts = ["guard", "witch", "villager", "fool", "grave", "dream", "wolf", "wolfking", "wolfbeauty"].map { "puppet_" + $0 }
+    private static let sceneCuts: [(String, Alignment)] = [
+        ("pano_street", .leading), ("pano_street", .trailing), ("pano_chapel", .center), ("pano_chapel", .trailing),
+        ("pano_square", .center), ("pano_square", .leading), ("pano_docks", .leading), ("pano_docks", .center),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "person.fill.questionmark").foregroundStyle(Theme.ember)
+                Text("人类含量检测").font(.headline).foregroundStyle(Theme.text)
+            }
+            Text("请点出所有木偶。机器人请绕行。").font(.subheadline).foregroundStyle(Theme.dim)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                ForEach(tiles) { tile in
+                    tileView(tile)
+                }
+            }
+            .modifier(Shake(amount: CGFloat(shake)))
+            if !message.isEmpty {
+                Text(message).font(.footnote.weight(.semibold)).foregroundStyle(bad ? Theme.rose : Theme.moss)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if !done {
+                HStack(spacing: 10) {
+                    Button("验证") { submit() }
+                        .buttonStyle(.quiet)
+                        .disabled(picked.isEmpty)
+                    Button {
+                        done = true
+                        message = "AI 证明不了你是人。但界面还是放你过去了。"
+                        bad = true
+                        onPass(true)
+                    } label: {
+                        Text("让 AI 替我验证")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Theme.ink)
+                            .frame(maxWidth: .infinity, minHeight: 46)
+                            .background(Theme.rose, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .raised()
+        .onAppear { if tiles.isEmpty { deal() } }
+    }
+
+    private func tileView(_ tile: CheckTile) -> some View {
+        let on = picked.contains(tile.id)
+        return Button {
+            guard !done else { return }
+            if on { picked.remove(tile.id) } else { picked.insert(tile.id) }
+            sfx(.tick)
+        } label: {
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay(alignment: tile.align) {
+                    Image(tile.art)
+                        .resizable()
+                        .scaledToFill()
+                }
+                .clipped()
+                .overlay(alignment: .topTrailing) {
+                    if on {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(Theme.ember, Theme.ink)
+                            .padding(4)
+                    }
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(on ? Theme.ember : Color.white.opacity(0.1), lineWidth: on ? 3 : 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .scaleEffect(on ? 0.94 : 1)
+                .animation(.easeOut(duration: 0.12), value: on)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(tile.puppet ? "木偶" : "场景")
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    private func deal() {
+        let count = Int.random(in: 3...4)
+        let puppets = Self.puppetArts.shuffled().prefix(count).map { ($0, true, Alignment.center) }
+        let scenes = Self.sceneCuts.shuffled().prefix(9 - count).map { ($0.0, false, $0.1) }
+        tiles = (puppets + scenes).shuffled().enumerated().map { CheckTile(id: $0.offset, art: $0.element.0, puppet: $0.element.1, align: $0.element.2) }
+        picked = []
+    }
+
+    private func submit() {
+        let answer = Set(tiles.filter(\.puppet).map(\.id))
+        bad = true
+        if picked != answer {
+            message = "选错了。再看看，哪些是木偶。"
+            sfx(.error)
+            withAnimation(.default) { shake += 1 }
+            deal()
+            return
+        }
+        if tries == 0 {
+            tries = 1
+            message = "没通过，请再试一次。"
+            sfx(.error)
+            withAnimation(.default) { shake += 1 }
+            deal()
+            return
+        }
+        done = true
+        bad = false
+        message = "通过了。其实第一次你就选对了——界面只是想让你再证明一次。"
+        onPass(false)
     }
 }

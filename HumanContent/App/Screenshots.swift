@@ -39,6 +39,21 @@ enum Screenshots {
                 stage.openCouncil(task: first.id)
             }
         case "talk": stage.openTalk(online: false)
+        case "fate-entry":
+            stage.councilMode = .fate
+            stage.tab = .council
+        case "fate-open":
+            stage.councilMode = .fate
+            stage.tab = .council
+            stage.openFate()
+        case "fate-verdict", "fate-done":
+            finishFate(role: store.s.role)
+            stage.councilMode = .fate
+            stage.tab = scene == "fate-done" ? .puppets : .council
+            if scene == "fate-verdict" {
+                FateStore.shared.wantsVerdict = true
+                stage.openFate()
+            }
         case "talk-game", "talk-vote", "talk-end":
             var game = KeyCase(seed: 7)
             if scene != "talk-game" { game.statement(optionId: "strategy-1", completed: store.gateCount) }
@@ -55,6 +70,35 @@ enum Screenshots {
             if scene.hasPrefix("intro-") { stage.intro = true }
             if scene.hasPrefix("lab-") { stage.startLab(level: String(scene.dropFirst(4)), task: first) }
         }
+    }
+
+    /// 把一局四夜之约直接打完（每题都选第一项），用来截结局页。
+    static func finishFate(role: RoleID) {
+        let data = FateData.shared
+        var g = FateGame.new(role: role, data: data, seed: 7)
+        var guardSteps = 0
+        while g.phase != .verdict && guardSteps < 200 {
+            guardSteps += 1
+            switch g.phase {
+            case .intro, .finale:
+                g.advance()
+            case .nightAsk, .dayAsk:
+                guard let c = g.currentCase(data) else { return }
+                _ = g.answer(c, option: guardSteps % 3, data: data)
+                g.advance()
+            case .dawn:
+                _ = g.playDawn()
+            case .vote:
+                guard let c = g.currentCase(data) else { return }
+                _ = g.playVote(c, option: 0, data: data)
+            case .ties:
+                for k in g.ties(data) { g.tiebreaks[k] = data.tiebreak[k]?.opts.first?.v ?? 2 }
+                _ = g.tally(data)
+            case .verdict:
+                break
+            }
+        }
+        FateStore.shared.update(g)
     }
 
     /// 一份有几天历史的示例账本。

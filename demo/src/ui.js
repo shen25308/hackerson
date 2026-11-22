@@ -89,7 +89,7 @@ function startLab(level = 'intro', quest = null) {
 function enter(place) {
   if (place === 'board') return go('tasks');
   if (place === 'theater' || place === 'backstage') return openSheet('labmenu');
-  if (place === 'fire') return openTalk();
+  if (place === 'fire') { closeSheet(true); UI.councilMode = 'fate'; UI.tab = 'council'; UI.route = null; sfx('nav'); return render(); }
   if (place === 'tower') return go('echo');
   if (place === 'ferry') return openSheet('ferry');
   return openSheet('district', { place });
@@ -107,7 +107,21 @@ function render() {
   renderChrome();
   if (UI.tab === 'village') Village.mount();
   if (UI.tab === 'tasks' && UI.wantsAdd) { UI.wantsAdd = false; if (!Store.closed) setTimeout(() => openSheet('add'), 250); }
+  if (UI.tab === 'tasks' && !UI.route) offerTroupe();
 }
+/* 界面使坏：每天第一次来任务板，剧团递上“今日安排”。 */
+function offerTroupe() {
+  const today = Store.today.id;
+  if (!Store.mischief || Store.closed || !Store.today.tasks.length || UI.prefs.troupeDay === today || UI.troupeTimer) return;
+  UI.troupeTimer = setTimeout(() => {
+    UI.troupeTimer = 0;
+    if (UI.tab !== 'tasks' || UI.route || UI.sheet || UI.cover || (window.Lab && Lab.isOpen()) || UI.prefs.troupeDay === today) return;
+    UI.prefs.troupeDay = today; UI.save();
+    sfx('tempt');
+    openCover('troupe', { moved: false });
+  }, 1200);
+}
+
 function renderChrome() {
   const tabs = [['village', 'home', '山庄'], ['tasks', 'task', '待办'], ['council', 'council', '议事'], ['puppets', 'mask', '木偶'], ['echo', 'wave', '回声']];
   $('#tabbar').innerHTML = tabs.map(([id, ic, name]) => `<button type="button" data-act="tab" data-tab="${id}" class="${UI.tab === id ? 'on' : ''}"${UI.tab === id ? ' aria-current="page"' : ''}>${icon(ic)}<span>${name}</span>${id === 'tasks' && Store.pending ? `<i class="badge">${Store.pending}</i>` : ''}</button>`).join('');
@@ -160,21 +174,25 @@ const Hold = {
     if (btn.disabled || btn.dataset.busy) return;
     btn.dataset.busy = '1';
     const fill = $('i', btn), label = $('span', btn), text = label.textContent, start = performance.now(), seconds = 1.1;
+    const stopAt = btn.dataset.interrupt ? Number(btn.dataset.interrupt) : 0;
     label.textContent = '按住…';
     let step = 0;
     const tick = () => {
       const p = Math.min(1, (performance.now() - start) / 1000 / seconds);
       fill.style.width = p * 100 + '%';
       if (++step % 6 === 0) sfx('hold', { pitch: 1 + p * 0.8 });
+      // 界面使坏：按到一半打断你一次。
+      if (stopAt && p >= stopAt) { end(false, true); return; }
       if (p >= 1) { end(true); return; }
       this.timer = requestAnimationFrame(tick);
     };
-    const end = (done) => {
+    const end = (done, nag) => {
       cancelAnimationFrame(this.timer);
       window.removeEventListener('pointerup', cancel); window.removeEventListener('pointercancel', cancel);
       delete btn.dataset.busy;
       label.textContent = text;
       if (done) { const act = ACT[btn.dataset.hold]; if (act) act(btn); }
+      else if (nag) { fill.style.width = '0'; sfx('glitch'); if (ACT['hold-nag']) ACT['hold-nag'](btn); }
       else { fill.style.width = '0'; sfx('focus-pause', { strength: 0.5 }); }
     };
     const cancel = () => end(false);
@@ -182,7 +200,7 @@ const Hold = {
     this.timer = requestAnimationFrame(tick);
   },
 };
-const holdButton = (act, label, cls = '') => `<button type="button" class="hold ${cls}" data-hold="${act}" aria-label="${esc(label)}，长按确认"><i></i><span>${esc(label)}</span></button>`;
+const holdButton = (act, label, cls = '', extra = '') => `<button type="button" class="hold ${cls}" data-hold="${act}" ${extra} aria-label="${esc(label)}，长按确认"><i></i><span>${esc(label)}</span></button>`;
 
 /* ---------- 山庄 ---------- */
 const PUPPETS = [['guard', '守门人', 25], ['witch', '药师', 44], ['grave', '寻迹人', 78], ['villager', '双生木偶', 114], ['fool', '琴师', 135], ['dream', '织梦人', 170], ['wolf', '灰毛', -125], ['wolfking', '戴冠者', -48], ['wolfbeauty', '玫瑰夫人', -28]];
@@ -290,7 +308,7 @@ const Village = {
     const texts = {
       board: [Store.closed ? '今天已经收工，记录还在。' : Store.today.tasks.length ? `今天还有 ${Store.pending} 项待办。` : '先写下一件今天能做完的事。', '看今日待办'],
       theater: ['抢写、追着你跑的按钮、换位的选项。亲手试一次界面怎么抢走你的决定。', '进剧场'], backstage: ['后三幕：像素、反驳、第 N 次。', '去后台'],
-      fire: [`三张字条和五席夜谈都在这里。夜谈现在能用到第 ${Store.strategyTier + 1} 手。`, '坐到火堆旁'], tower: [`已经整件做完 ${Store.completed} 项。回看任务、选票和用时。`, '翻开行为回声'],
+      fire: ['十个人围着火堆坐好了。四夜之约、三张字条和五席夜谈都在这里。', '坐到火堆旁'], tower: [`已经整件做完 ${Store.completed} 项。回看任务、选票和用时。`, '翻开行为回声'],
       decisions: ['回看你采用过的策略和投过的票。', '上观星台'], mirror: ['把现实里的行动和桌上的决定并排放。', '走进回声廊'],
       ferry: ['建一个房间邀朋友，或输入六位房间码入座。', '去渡口'], experiment: ['写下一个假设，下次留下可以核对的记录。', '到镜湖边'],
     }[id];
@@ -360,17 +378,44 @@ function detailView(id) {
   const events = Store.s.events.filter((e) => e.task === id).slice(-5);
   const result = t.done ? `<div class="raised stack tight"><div class="row base"><b class="h2 ember">经验 +${t.earned}</b>${t.healed ? `<span class="rose small">生命 +${t.healed}</span>` : ''}<span class="grow"></span>${t.actual !== null ? `<span class="sub">${t.actual} / ${t.estimate} 分钟</span>` : ''}</div>${(t.xpParts || []).map((p) => kv(esc(p.label), (p.value > 0 ? '+' : '') + p.value, p.value < 0 ? 'rose' : '')).join('')}${t.context ? `<p class="small dim">${esc(t.context)}</p>` : ''}</div>` : '';
   const mine = Focus.mine(id), running = mine && Focus.state.running, finished = mine && Focus.state.finished, ms = mine ? Focus.elapsed() : 0;
-  const focus = !Rules.isFull(t) && !Store.closed ? `<div class="raised stack"><div class="row base"><span class="timer${running ? '' : ' idle'}" data-clock="${id}">${Focus.format(ms)}</span><span class="grow"></span><span class="sub">${!mine ? '先做一会儿' : finished ? '计时已结束' : running ? '正在计时' : '已暂停'}</span></div>${meter(ms / (Math.max(1, t.estimate) * 60000))}<div class="row">${!mine || finished ? `<button type="button" class="btn quiet" data-act="focus-start" data-id="${id}">开始计时</button>` : `<button type="button" class="btn quiet" data-act="focus-toggle">${running ? '暂停' : '继续'}</button><button type="button" class="btn quiet" data-act="focus-stop">结束</button>`}</div></div>` : '';
+  const focus = !Rules.isFull(t) && !Store.closed ? `<div class="raised stack"><div class="row base"><span class="timer${running ? '' : ' idle'}" data-clock="${id}">${Focus.format(ms)}</span><span class="grow"></span><span class="sub">${!mine ? '先做一会儿' : finished ? '计时已结束' : running ? '正在计时' : '已暂停'}</span></div>${meter(ms / (Math.max(1, t.estimate) * 60000))}${UI.loading && UI.loading.id === id ? fakeLoading() : ''}<div class="row">${!mine || finished ? `<button type="button" class="btn quiet" data-act="focus-start" data-id="${id}" ${UI.loading ? 'disabled' : ''}>${UI.loading ? '加载中…' : '开始计时'}</button>` : `<button type="button" class="btn quiet" data-act="focus-toggle">${running ? '暂停' : '继续'}</button><button type="button" class="btn quiet" data-act="focus-stop">结束</button>`}</div></div>` : '';
   return `<section class="screen">${Atmo.html('street')}<div class="scroll">${backBar()}
   <div class="stack"><h1 class="title sm">${esc(t.title)}</h1><div class="row" style="flex-wrap:wrap;gap:6px"><span class="tag ${t.bonus ? 'ember' : 'rose'}">${t.bonus ? '额外' : '必做'}</span><span class="tag">预计 ${t.estimate} 分钟</span>${Rules.isFull(t) ? '<span class="tag moss">已完成</span>' : ''}${Rules.isPartial(t) ? '<span class="tag ember">做完一部分</span>' : ''}</div></div>
   ${result}${focus}
   <div class="field"><label for="stepInput">下一步，具体做什么</label><textarea class="input" id="stepInput" rows="2" maxlength="300" data-draft="step" placeholder="例如：把现有草稿发给小林，问他哪一段看不懂" ${locked ? 'disabled' : ''}>${esc(step)}</textarea><button type="button" class="btn quiet fit" id="stepSave" data-act="save-step" data-id="${id}" ${step.trim() === t.step ? 'hidden' : ''}>保存这一步</button></div>
   ${hint ? `<div class="raised stack"><p>同名任务最近三次用了 ${hint.samples.join('、')} 分钟。</p><button type="button" class="btn quiet fit" data-act="use-estimate" data-id="${id}">把预计改成 ${hint.minutes} 分钟</button></div>` : ''}
-  <div class="stack">${Store.closed ? '' : !t.done ? `<button type="button" class="btn" data-act="sheet" data-sheet="complete" data-id="${id}">我做完了</button>` : `${Rules.isPartial(t) ? `<button type="button" class="btn" data-act="sheet" data-sheet="complete" data-id="${id}">补完剩下的</button>` : ''}<button type="button" class="btn quiet" data-act="undo" data-id="${id}">撤销这次完成</button>`}
+  <div class="stack">${Store.closed ? '' : !t.done ? doneButton(id) : `${Rules.isPartial(t) ? `<button type="button" class="btn" data-act="sheet" data-sheet="complete" data-id="${id}">补完剩下的</button>` : ''}${UI.undoAsk === id ? undoConfirm(id) : `<button type="button" class="btn quiet" data-act="undo-ask" data-id="${id}">撤销这次完成</button>`}`}
   <div class="row"><button type="button" class="btn quiet" data-act="to-council" data-id="${id}">带去议事</button><button type="button" class="btn quiet" data-act="to-lab" data-id="${id}">带进剧场</button></div>
   ${!t.done && !Store.closed ? `<button type="button" class="link" data-act="sheet" data-sheet="adjust" data-id="${id}">目标变了？</button>` : ''}</div>
   ${events.length ? `<div class="stack"><h2 class="h2">足迹</h2>${events.map((e) => `<div class="row base"><time class="small dim" style="font-variant-numeric:tabular-nums">${e.time}</time><span class="grow" style="font-size:14px">${esc(e.text)}</span></div>`).join('')}</div>` : ''}</div></section>`;
 }
+/* 界面使坏：“我做完了”头两次会躲开。 */
+function doneButton(id) {
+  const n = UI.dodge && UI.dodge.id === id ? UI.dodge.n : 0;
+  return `<button type="button" class="btn dodge d${n}" data-act="done-tap" data-id="${id}">${['我做完了', '真做完了？', '再按一次就信你'][n]}</button>`;
+}
+/* 撤销的确认：要保留的那个按钮，第一次按会躲到另一边。 */
+function undoConfirm(id) {
+  const undo = `<button type="button" class="btn danger" data-act="undo" data-id="${id}">撤销</button>`;
+  const keep = `<button type="button" class="btn quiet" data-act="undo-keep">${UI.undoSwapped ? '按错了？这次是保留' : '保留'}</button>`;
+  return `<div class="raised stack"><p style="font-size:14px">撤销后，这次的经验和回血都会收回。</p><div class="row">${UI.undoSwapped ? keep + undo : undo + keep}</div></div>`;
+}
+/* 界面使坏：开始计时前假装加载，冲到 99% 就卡住。 */
+function fakeLoading() {
+  return `<div class="stack tight"><div class="row small"><span class="grow dim" data-fake-text>正在为你准备专注环境…</span><b data-fake-pct style="font-variant-numeric:tabular-nums">0%</b></div><div class="meter" style="height:4px"><i data-fake-bar style="width:0;background:var(--dim);transition:none"></i></div><button type="button" class="btn danger fit" data-act="procrastinate" data-fake-escape hidden style="min-height:40px;border-radius:99px">先刷会儿再说</button></div>`;
+}
+function tickFakeLoading() {
+  if (!UI.loading) return;
+  const t = (performance.now() - UI.loading.since) / 1000, pct = Math.min(99, Math.floor((t / 1.2) * 99));
+  for (const el of $$('[data-fake-pct]')) el.textContent = pct + '%';
+  for (const el of $$('[data-fake-bar]')) el.style.width = pct + '%';
+  if (pct >= 99) {
+    for (const el of $$('[data-fake-text]')) el.textContent = '马上就好，再等一下…';
+    for (const el of $$('[data-fake-escape]')) el.hidden = false;
+  }
+  if (t < 2.6) requestAnimationFrame(tickFakeLoading);
+}
+
 function settleView() {
   const d = Store.today;
   if (d.closed) return `<section class="screen">${Atmo.html('chapel')}<div class="scroll">${backBar('今天已入档')}<div class="raised">${kv('经验', '+' + (Rules.earned(d) + (d.bonusXP || 0)))}${kv('生命', '−' + d.loss, d.loss ? 'rose' : '')}${kv('抽牌机会', '+' + d.awarded)}</div><button type="button" class="btn" data-act="tab" data-tab="echo">看今天的记录</button></div></section>`;
@@ -400,15 +445,43 @@ Object.assign(ACT, {
     if (Rules.isFull(t)) { if (Store.undo(t.id)) { sfx('undo'); toast('已撤销完成。'); render(); } }
     else { sfx('open'); openSheet('complete', { id: t.id }); }
   },
-  undo(b) { if (Store.undo(b.dataset.id)) { sfx('undo'); toast('已撤销，经验和回血一起撤回。'); render(); } },
+  undo(b) { UI.undoAsk = null; if (Store.undo(b.dataset.id)) { sfx('undo'); toast('已撤销，经验和回血一起撤回。'); render(); } },
   'save-step'(b) { Store.saveStep(b.dataset.id, UI.drafts.step || ''); UI.drafts.step = undefined; sfx('accept'); toast('下一步已保存。'); render(); },
   'use-estimate'(b) { Store.useEstimate(b.dataset.id); sfx('accept'); render(); },
   'to-council': (b) => openCouncil(b.dataset.id),
   'to-lab': (b) => startLab('intro', Store.quest(b.dataset.id)),
   'focus-start'(b) {
-    const other = Focus.activeTask();
-    if (other && other !== b.dataset.id && Focus.state.demo === Store.demo) Focus.stop();
-    Focus.start(b.dataset.id); sfx('focus-start'); render();
+    const id = b.dataset.id, other = Focus.activeTask();
+    if (other && other !== id && Focus.state.demo === Store.demo) Focus.stop();
+    if (!Store.mischief) { Focus.start(id); sfx('focus-start'); render(); return; }
+    UI.loading = { id, since: performance.now() };
+    sfx('tempt', { strength: 0.6 });
+    render();
+    requestAnimationFrame(tickFakeLoading);
+    UI.loading.timer = setTimeout(() => {
+      if (!UI.loading || UI.loading.id !== id) return;
+      UI.loading = null;
+      Store.logBait(false, '开始计时卡在 99% 时，没有先去刷一会儿', id);
+      Focus.start(id); sfx('focus-start'); render();
+    }, 2600);
+  },
+  procrastinate() {
+    if (!UI.loading) return;
+    const id = UI.loading.id;
+    clearTimeout(UI.loading.timer);
+    UI.loading = null;
+    Store.logBait(true, '开始计时卡在 99% 时，点了“先刷会儿再说”', id);
+    sfx('taken'); toast('计时没开。刷完记得回来。'); render();
+  },
+  'done-tap'(b) {
+    const id = b.dataset.id, n = UI.dodge && UI.dodge.id === id ? UI.dodge.n : 0;
+    if (Store.mischief && n < 2) { UI.dodge = { id, n: n + 1 }; sfx('swap'); render(); return; }
+    UI.dodge = null; sfx('open'); openSheet('complete', { id });
+  },
+  'undo-ask'(b) { UI.undoAsk = b.dataset.id; UI.undoSwapped = false; sfx('open'); render(); },
+  'undo-keep'() {
+    if (Store.mischief && !UI.undoSwapped) { UI.undoSwapped = true; sfx('swap'); render(); return; }
+    UI.undoAsk = null; sfx('close'); render();
   },
   'focus-toggle'() { if (!Focus.state) return; if (Focus.state.running) { Focus.pause(); sfx('focus-pause'); } else { Focus.resume(); sfx('focus-start'); } render(); },
   'focus-stop'() { const ms = Focus.stop(); sfx('focus-end'); toast(`这段计时 ${Math.floor(ms / 60000)} 分 ${Math.floor(ms / 1000) % 60} 秒。做没做完，由你来登记。`); render(); },
@@ -495,7 +568,14 @@ Object.assign(ACT, {
 SHEETS.complete = (s) => {
   const t = Store.quest(s.id), f = s.form;
   if (!t) return { title: '现实里做完了吗', scene: 'street', body: '<p class="sub">这项任务已经不在今天了。</p>' };
-  if (f.grade === undefined) { const m = Focus.suggestion(s.id); Object.assign(f, { grade: 'full', minutes: m ? String(m) : '', context: '', fromTimer: !!m, baitTapped: false }); if (Store.mischief) sfx('tempt', { delay: 0.5 }); }
+  if (f.grade === undefined) {
+    const m = Focus.suggestion(s.id);
+    Object.assign(f, { grade: 'full', minutes: m ? String(m) : '', context: '', fromTimer: !!m, baitTapped: false, nagged: false,
+      needsCheck: Store.mischief && !Store.today.tasks.some((x) => x.done), verified: false });
+    if (f.needsCheck) HumanCheck.deal(f);
+    if (Store.mischief) sfx('tempt', { delay: 0.5 });
+  }
+  const locked = f.needsCheck && !f.verified;
   const actual = () => (f.grade === 'full' && /^\d+$/.test(f.minutes.trim()) ? Math.min(10080, Number(f.minutes.trim())) : null);
   const breakdown = () => {
     const parts = Store.preview(s.id, f.grade, actual(), Focus.focusedMinutes(s.id)), heal = Rules.heal(t, f.grade, Store.s);
@@ -511,10 +591,62 @@ SHEETS.complete = (s) => {
     <div class="field"><label for="doneMin">实际用了几分钟（可不填）</label><input class="input" id="doneMin" data-f="minutes" inputmode="numeric" maxlength="5" placeholder="比如 20" value="${esc(f.minutes)}">${f.fromTimer ? '<span class="small dim">已带入这次计时。</span>' : ''}</div>
     <div class="field"><label for="doneNote">补充一句（可不填）</label><textarea class="input" id="doneNote" data-f="context" rows="2" maxlength="300" placeholder="例如：临时多了一次沟通">${esc(f.context)}</textarea></div>
     <div class="raised" id="xpBox">${breakdown()}</div>
-    ${holdButton('complete', f.grade === 'full' ? '按住，确认整件做完' : '按住，登记做完一部分')}`,
+    ${f.needsCheck && !f.verified ? HumanCheck.html(f) : ''}
+    ${holdButton('complete', f.grade === 'full' ? '按住，确认整件做完' : '按住，登记做完一部分', '', `${Store.mischief && !f.nagged ? 'data-interrupt="0.62"' : ''} ${locked ? 'disabled' : ''}`)}
+    ${f.nagged ? '<p class="small rose" style="font-weight:650">按得不够坚定。松手，再按一次。</p>' : ''}`,
   };
 };
+/* 人类验证：点出所有木偶。第一次就算选对也判“没通过”。 */
+const HumanCheck = {
+  PUPPETS: ['guard', 'witch', 'villager', 'fool', 'grave', 'dream', 'wolf', 'wolfking', 'wolfbeauty'],
+  SCENES: [['street', '0%'], ['street', '100%'], ['chapel', '50%'], ['chapel', '100%'], ['square', '50%'], ['square', '0%'], ['docks', '0%'], ['docks', '50%']],
+  shuffle: (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]),
+  deal(f) {
+    const n = 3 + Math.floor(Math.random() * 2);
+    const puppets = this.shuffle(this.PUPPETS).slice(0, n).map((k) => ({ art: 'puppet_' + k, puppet: true, pos: '50%' }));
+    const scenes = this.shuffle(this.SCENES).slice(0, 9 - n).map(([k, pos]) => ({ art: 'pano_' + k, puppet: false, pos }));
+    f.tiles = this.shuffle([...puppets, ...scenes]);
+    f.picked = [];
+  },
+  html(f) {
+    const tiles = f.tiles.map((t, i) => `<button type="button" class="hc-tile${f.picked.includes(i) ? ' on' : ''} art-${t.art}" style="background-position:${t.pos} 50%" data-act="hc-tile" data-i="${i}" aria-label="${t.puppet ? '木偶' : '场景'}" aria-pressed="${f.picked.includes(i)}"></button>`).join('');
+    return `<div class="raised stack" id="hcBox"><b style="font-size:16px">人类含量检测</b><p class="small dim">请点出所有木偶。机器人请绕行。</p><div class="hc-grid">${tiles}</div>
+    ${f.hcMsg ? `<p class="small ${f.hcBad ? 'rose' : 'moss'}" style="font-weight:650">${f.hcMsg}</p>` : ''}
+    ${f.hcDone ? '' : `<div class="row"><button type="button" class="btn quiet" data-act="hc-submit" ${f.picked.length ? '' : 'disabled'}>验证</button><button type="button" class="btn danger" data-act="hc-ai">让 AI 替我验证</button></div>`}</div>`;
+  },
+  pass(s, byAI) {
+    const f = s.form;
+    f.hcDone = true;
+    if (byAI) { f.hcBad = true; f.hcMsg = 'AI 证明不了你是人。但界面还是放你过去了。'; Store.logBait(true, '人类验证时，让 AI 替你证明自己是人', s.id); sfx('taken'); }
+    else { f.hcBad = false; f.hcMsg = '通过了。其实第一次你就选对了——界面只是想让你再证明一次。'; Store.logBait(false, '人类验证时，自己一张张点出了木偶', s.id); sfx('resist'); }
+    renderSheet();
+    setTimeout(() => { if (UI.sheet === s) { f.verified = true; renderSheet(); } }, 1400);
+  },
+};
 Object.assign(ACT, {
+  'hc-tile'(b) {
+    const f = UI.sheet.form, i = Number(b.dataset.i);
+    if (f.hcDone) return;
+    f.picked = f.picked.includes(i) ? f.picked.filter((x) => x !== i) : [...f.picked, i];
+    sfx('tick'); renderSheet();
+  },
+  'hc-submit'() {
+    const s = UI.sheet, f = s.form, answer = f.tiles.map((t, i) => (t.puppet ? i : -1)).filter((i) => i >= 0);
+    const right = answer.length === f.picked.length && answer.every((i) => f.picked.includes(i));
+    if (right && f.hcTries) return HumanCheck.pass(s, false);
+    f.hcBad = true;
+    f.hcMsg = right ? '没通过，请再试一次。' : '选错了。再看看，哪些是木偶。';
+    if (right) f.hcTries = 1;
+    sfx('error'); HumanCheck.deal(f); renderSheet();
+    const box = $('#hcBox'); if (box) box.classList.add('shake');
+  },
+  'hc-ai'() { HumanCheck.pass(UI.sheet, true); },
+  'hold-nag'() {
+    const s = UI.sheet;
+    if (!s || !s.form) return;
+    s.form.nagged = true; renderSheet();
+    const btn = $('[data-hold="complete"]'); if (btn) btn.classList.add('shake');
+  },
   grade(b) { UI.sheet.form.grade = b.dataset.v; sfx('tick'); renderSheet(); },
   'bait-all'(b) {
     const s = UI.sheet;

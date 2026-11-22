@@ -296,6 +296,9 @@ struct HoldButton: View {
     let title: String
     var seconds: Double = 1.1
     var color: Color = Theme.ember
+    /// 界面使坏：第一次按到这个进度时把你打断，必须松手重按。
+    var interruptAt: Double? = nil
+    var onInterrupt: (() -> Void)? = nil
     let action: () -> Void
 
     @State private var progress = 0.0
@@ -303,6 +306,8 @@ struct HoldButton: View {
     @State private var holding = false
     /// 触发过一次之后，必须松手才能再按。
     @State private var fired = false
+    @State private var interrupted = false
+    @State private var jolt = 0
 
     var body: some View {
         Text(holding ? "按住…" : title)
@@ -319,6 +324,7 @@ struct HoldButton: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .scaleEffect(holding ? 0.98 : 1)
+            .modifier(Shake(amount: CGFloat(jolt)))
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -344,6 +350,18 @@ struct HoldButton: View {
             step += 1
             progress = min(1, Double(step) * 0.05 / seconds)
             if step % 3 == 0 { sfx(.hold, pitch: 1 + progress * 0.8) }
+            if let stop = interruptAt, !interrupted, progress >= stop {
+                t.invalidate()
+                timer = nil
+                holding = false
+                interrupted = true
+                fired = true
+                sfx(.glitch)
+                withAnimation(.default) { jolt += 1 }
+                withAnimation(.easeOut(duration: 0.35)) { progress = 0 }
+                onInterrupt?()
+                return
+            }
             if progress >= 1 {
                 t.invalidate()
                 timer = nil

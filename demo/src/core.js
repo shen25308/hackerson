@@ -137,7 +137,7 @@ const Atlas = {
     { id: 'board', name: '任务板', feature: '今天要做的事', need: 0, scene: 0, x: 0.2, y: 0.62 },
     { id: 'theater', name: '木偶剧场', feature: '反向体验 · 前三幕', need: 0, scene: 0, x: 0.8, y: 0.5 },
     { id: 'backstage', name: '剧场后台', feature: '反向体验 · 后三幕', need: 2, scene: 0, x: 0.5, y: 0.62 },
-    { id: 'fire', name: '火堆', feature: '字条议事 · 五席夜谈', need: 0, scene: 1, x: 0.5, y: 0.68 },
+    { id: 'fire', name: '火堆', feature: '四夜之约 · 字条议事', need: 0, scene: 1, x: 0.5, y: 0.68 },
     { id: 'tower', name: '钟楼', feature: '行为回声', need: 0, scene: 1, x: 0.4, y: 0.3 },
     { id: 'decisions', name: '观星台', feature: '决策档案 · 夜谈第二手', need: 1, scene: 2, x: 0.36, y: 0.27 },
     { id: 'mirror', name: '回声廊', feature: '任务与选票对照 · 夜谈第三手', need: 3, scene: 2, x: 0.7, y: 0.68 },
@@ -288,7 +288,7 @@ const Echo = {
     if (t.kind === 'vote') return `指认 ${t.targetSeat} 号席位`;
     return t.winner === 'villagers' ? '钥匙找回来了' : '钥匙没找回来';
   },
-  typeLabel: (type) => ({ vote: '字条', done: '现实行动', undo: '撤销', bait: '界面使坏', simulation: '反向体验', hypothesis: '假设', settle: '收工', card: '抽牌' }[type] || (type.startsWith('game-') ? '夜谈' : '记录')),
+  typeLabel: (type) => ({ vote: '字条', done: '现实行动', undo: '撤销', bait: '界面使坏', simulation: '反向体验', hypothesis: '假设', settle: '收工', card: '抽牌', fate: '四夜之约' }[type] || (type.startsWith('game-') ? '夜谈' : '记录')),
 };
 
 /* 账本的读写。界面只读 Store.s，改动都走这里。 */

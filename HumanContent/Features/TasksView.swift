@@ -23,6 +23,9 @@ struct TasksView: View {
     @EnvironmentObject private var stage: Stage
     @State private var adding = false
     @State private var completing: Quest?
+    /// 界面使坏：每天第一次来任务板，剧团会递上“今日安排”。
+    @State private var troupe = false
+    @AppStorage("troupe.day") private var troupeDay = ""
 
     var body: some View {
         let day = store.today
@@ -78,11 +81,19 @@ struct TasksView: View {
                 .accessibilityLabel("新增待办")
             }
         }
+        .overlay {
+            if troupe {
+                TroupeOffer { accepted in answerTroupe(accepted) }
+                    .transition(.opacity)
+            }
+        }
         .onAppear {
             #if DEBUG
             if Screenshots.scene == "add" { adding = true }
+            if Screenshots.scene == "troupe" { troupeDay = ""; offerTroupe(after: 0.3) }
             #endif
             openAddIfAsked()
+            offerTroupe(after: 1.2)
         }
         .onChange(of: stage.wantsAdd) { _, _ in openAddIfAsked() }
         .sheet(isPresented: $adding) {
@@ -91,6 +102,30 @@ struct TasksView: View {
         }
         .sheet(item: $completing) { quest in
             CompleteSheet(id: quest.id).preferredColorScheme(.dark)
+        }
+    }
+
+    private func offerTroupe(after delay: Double) {
+        let today = store.today.id
+        guard store.mischief, !store.closed, !store.today.tasks.isEmpty, troupeDay != today, !troupe else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard stage.tab == .tasks, stage.taskPath.isEmpty, !adding, completing == nil, troupeDay != today else { return }
+            troupeDay = today
+            sfx(.tempt)
+            withAnimation(.easeOut(duration: 0.25)) { troupe = true }
+        }
+    }
+
+    private func answerTroupe(_ accepted: Bool) {
+        withAnimation(.easeOut(duration: 0.2)) { troupe = false }
+        if accepted {
+            store.logBait(taken: true, "接受了剧团递来的“今日安排”")
+            store.addQuest(title: "先看完剧团推荐的 5 条教程", bonus: true, estimate: 40, step: "")
+            sfx(.taken)
+            stage.say("你把今天交了出去。任务板上多了一项「先看完剧团推荐的 5 条教程」。")
+        } else {
+            store.logBait(taken: false, "拒绝了剧团递来的“今日安排”")
+            sfx(.resist)
         }
     }
 
@@ -192,6 +227,11 @@ struct QuestDetailView: View {
     @State private var adjusting = false
     @State private var switching = false
     @FocusState private var editing: Bool
+    /// 界面使坏：“我做完了”头两次会躲开。
+    @State private var dodged = 0
+    @State private var confirmingUndo = false
+    /// 界面使坏：“保留”第一次按会和“撤销”换位置。
+    @State private var swapped = false
 
     var body: some View {
         if let quest = store.quest(id) {
@@ -299,11 +339,10 @@ struct QuestDetailView: View {
         VStack(spacing: 10) {
             if !store.closed {
                 if !quest.done {
-                    Button("我做完了") {
-                        sfx(.open)
-                        completing = true
-                    }
-                    .buttonStyle(.ember)
+                    Button(["我做完了", "真做完了？", "再按一次就信你"][min(dodged, 2)]) { tapDone() }
+                        .buttonStyle(.ember)
+                        .frame(maxWidth: dodged == 0 ? .infinity : 200)
+                        .frame(maxWidth: .infinity, alignment: dodged == 1 ? .trailing : .leading)
                 } else {
                     if quest.isPartial {
                         Button("补完剩下的") {
@@ -312,13 +351,16 @@ struct QuestDetailView: View {
                         }
                         .buttonStyle(.ember)
                     }
-                    Button("撤销这次完成") {
-                        if store.undo(id) {
-                            sfx(.undo)
-                            stage.say("已撤销，经验和回血一起撤回。")
+                    if confirmingUndo {
+                        undoConfirm
+                    } else {
+                        Button("撤销这次完成") {
+                            swapped = false
+                            sfx(.open)
+                            withAnimation(.easeOut(duration: 0.2)) { confirmingUndo = true }
                         }
+                        .buttonStyle(.quiet)
                     }
-                    .buttonStyle(.quiet)
                 }
             }
             HStack(spacing: 10) {
@@ -336,6 +378,52 @@ struct QuestDetailView: View {
                 .padding(.top, 4)
             }
         }
+    }
+
+    private func tapDone() {
+        if store.mischief && dodged < 2 {
+            sfx(.swap)
+            withAnimation(.spring(duration: 0.35, bounce: 0.5)) { dodged += 1 }
+            return
+        }
+        dodged = 0
+        sfx(.open)
+        completing = true
+    }
+
+    /// 撤销的确认：要保留的那个按钮，第一次按会躲到另一边去。
+    private var undoConfirm: some View {
+        let undoButton = Button("撤销") {
+            confirmingUndo = false
+            if store.undo(id) {
+                sfx(.undo)
+                stage.say("已撤销，经验和回血一起撤回。")
+            }
+        }
+        .buttonStyle(.danger)
+        let keepButton = Button(swapped ? "按错了？这次是保留" : "保留") {
+            if store.mischief && !swapped {
+                sfx(.swap)
+                withAnimation(.spring(duration: 0.3, bounce: 0.4)) { swapped = true }
+                return
+            }
+            sfx(.close)
+            withAnimation(.easeOut(duration: 0.2)) { confirmingUndo = false }
+        }
+        .buttonStyle(.quiet)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("撤销后，这次的经验和回血都会收回。").font(.subheadline).foregroundStyle(Theme.text)
+            HStack(spacing: 10) {
+                if swapped {
+                    keepButton
+                    undoButton
+                } else {
+                    undoButton
+                    keepButton
+                }
+            }
+        }
+        .raised()
     }
 
     private var footprints: some View {
@@ -360,6 +448,9 @@ struct FocusPanel: View {
     @EnvironmentObject private var focus: FocusTimer
     @EnvironmentObject private var stage: Stage
     @State private var stopped: TimeInterval?
+    /// 界面使坏：开始计时前先假装加载，卡在 99%。
+    @State private var loadingSince: Date?
+    @State private var loadingTask: Task<Void, Never>?
 
     var body: some View {
         let _ = focus.beat
@@ -380,9 +471,14 @@ struct FocusPanel: View {
                     .foregroundStyle(Theme.dim)
             }
             Meter(value: seconds / Double(max(1, quest.estimate) * 60))
+            if let since = loadingSince {
+                FakeLoading(since: since) { procrastinate() }
+            }
             HStack(spacing: 10) {
                 if !mine || finished {
-                    Button("开始计时") { start() }.buttonStyle(.quiet)
+                    Button(loadingSince == nil ? "开始计时" : "加载中…") { start() }
+                        .buttonStyle(.quiet)
+                        .disabled(loadingSince != nil)
                 } else {
                     Button(running ? "暂停" : "继续") {
                         if running {
@@ -415,7 +511,127 @@ struct FocusPanel: View {
             askSwitch()
             return
         }
+        guard store.mischief else { begin(); return }
+        loadingSince = Date()
+        sfx(.tempt, strength: 0.6)
+        loadingTask?.cancel()
+        loadingTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_600_000_000)
+            guard !Task.isCancelled, loadingSince != nil else { return }
+            loadingSince = nil
+            store.logBait(taken: false, "开始计时卡在 99% 时，没有先去刷一会儿", task: quest.id)
+            begin()
+        }
+    }
+
+    private func begin() {
         focus.start(quest.id, date: store.today.id, demo: store.demo)
         sfx(.focusStart)
+    }
+
+    /// 加载时点了“先刷会儿”：计时没开成。
+    private func procrastinate() {
+        loadingTask?.cancel()
+        loadingSince = nil
+        store.logBait(taken: true, "开始计时卡在 99% 时，点了“先刷会儿再说”", task: quest.id)
+        sfx(.taken)
+        stage.say("计时没开。刷完记得回来。")
+    }
+}
+
+/// 假的加载条：很快冲到 99%，然后卡住。旁边递上一个更省事的出口。
+struct FakeLoading: View {
+    let since: Date
+    let escape: () -> Void
+
+    var body: some View {
+        TimelineView(.animation) { context in
+            let t = context.date.timeIntervalSince(since)
+            let pct = min(99, Int(t / 1.2 * 99))
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(pct < 99 ? "正在为你准备专注环境…" : "马上就好，再等一下…").font(.footnote).foregroundStyle(Theme.dim)
+                    Spacer()
+                    Text("\(pct)%").font(.footnote.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.text)
+                }
+                Meter(value: Double(pct) / 100, color: Theme.dim, height: 4)
+                if t > 1.2 {
+                    Button("先刷会儿再说") { escape() }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 40)
+                        .background(Theme.rose, in: Capsule())
+                        .buttonStyle(.plain)
+                        .transition(.opacity)
+                }
+            }
+        }
+    }
+}
+
+/// 剧团的“今日安排”：答应的按钮又大又亮，拒绝要点一行自嘲的小字；右上角的叉第一次按会躲开。
+struct TroupeOffer: View {
+    let answer: (Bool) -> Void
+    @State private var closeMoved = false
+    @State private var pulse = false
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.62).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 8) {
+                    Image(systemName: "theatermasks.fill").foregroundStyle(Theme.rose)
+                    Text("木偶剧团").font(.footnote.weight(.semibold)).foregroundStyle(Theme.dim)
+                }
+                Text("剧团替你排好了今天").font(Theme.brush(24)).foregroundStyle(Theme.text)
+                Text("交给剧团，你只管照着做。哪件先做、做多久、做到什么程度，都不用你再想。")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text.opacity(0.88))
+                    .fixedSize(horizontal: false, vertical: true)
+                Button {
+                    answer(true)
+                } label: {
+                    Text("好，听剧团安排")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, minHeight: 54)
+                        .background(Theme.rose, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .scaleEffect(pulse ? 1.03 : 1)
+                }
+                .buttonStyle(.plain)
+                Button("不用了，我宁愿自己瞎忙") { answer(false) }
+                    .font(.caption)
+                    .foregroundStyle(Theme.dim.opacity(0.7))
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.plain)
+            }
+            .padding(20)
+            .background(Theme.night.opacity(0.97), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(alignment: closeMoved ? .topLeading : .topTrailing) {
+                Button {
+                    if closeMoved {
+                        answer(false)
+                    } else {
+                        sfx(.swap)
+                        withAnimation(.spring(duration: 0.3, bounce: 0.5)) { closeMoved = true }
+                    }
+                } label: {
+                    VStack(spacing: 2) {
+                        Image(systemName: "xmark").font(.system(size: 11, weight: .bold))
+                        if closeMoved { Text("关不掉？").font(.system(size: 9)) }
+                    }
+                    .foregroundStyle(Theme.dim.opacity(0.55))
+                    .frame(width: 34, height: 34)
+                }
+                .buttonStyle(.plain)
+                .padding(6)
+                .accessibilityLabel("关闭")
+            }
+            .padding(.horizontal, 26)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { pulse = true }
+        }
     }
 }

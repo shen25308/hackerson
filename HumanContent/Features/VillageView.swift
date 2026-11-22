@@ -459,7 +459,7 @@ struct VillageView: View {
             text = "后三幕：像素、反驳、第 N 次。"
             button = "去后台"
         case "fire":
-            text = "三张字条和五席夜谈都在这里。夜谈现在能用到第 \(store.strategyTier + 1) 手。"
+            text = "十个人围着火堆坐好了。四夜之约、三张字条和五席夜谈都在这里。"
             button = "坐到火堆旁"
         case "tower":
             text = "已经整件做完 \(store.completed) 项。回看任务、选票和用时。"

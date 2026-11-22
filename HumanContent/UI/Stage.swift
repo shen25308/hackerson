@@ -10,7 +10,7 @@ enum TaskRoute: Hashable {
 }
 
 enum CouncilMode: Hashable {
-    case slips, talk
+    case slips, fate, talk
 }
 
 /// 反向体验从哪一幕开始、带着哪件事进去。
@@ -59,6 +59,8 @@ final class Stage: ObservableObject {
     @Published var intro = false
     /// 请任务板直接打开“新增待办”。
     @Published var wantsAdd = false
+    /// 四夜之约的牌桌是否打开。
+    @Published var fateOpen = false
 
     private var toastWork: DispatchWorkItem?
     private var flashWork: DispatchWorkItem?
@@ -119,6 +121,12 @@ final class Stage: ObservableObject {
         sfx(.nav)
     }
 
+    func openFate() {
+        sheet = nil
+        fateOpen = true
+        sfx(.drawShuffle)
+    }
+
     func startLab(level: String = "intro", task: Quest? = nil) {
         sheet = nil
         lab = LabEntry(level: level, taskId: task?.id, taskTitle: task?.title ?? "")
@@ -130,7 +138,11 @@ final class Stage: ObservableObject {
         switch place {
         case "board": go(.tasks)
         case "theater", "backstage": sheet = .labMenu
-        case "fire": openTalk(online: false)
+        case "fire":
+            sheet = nil
+            councilMode = .fate
+            tab = .council
+            sfx(.nav)
         case "tower": go(.echo)
         case "ferry": openTalk(online: true)
         case "decisions", "mirror", "experiment": sheet = .district(place)

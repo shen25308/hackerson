@@ -262,6 +262,23 @@ input[type="range"] { width: 100%; accent-color: var(--ember); }
 .drain > i { display: block; height: 100%; width: 100%; background: var(--rose); transform-origin: left; animation: drain var(--dur, 2.6s) linear forwards; }
 @keyframes drain { to { transform: scaleX(0); } }
 
+/* ---------- 恨点 ---------- */
+.btn.dodge { transition: width 0.35s cubic-bezier(0.3, 1.6, 0.5, 1), margin 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.btn.dodge.d1 { width: 58%; margin-left: 42%; }
+.btn.dodge.d2 { width: 58%; margin-right: 42%; }
+.hc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.hc-tile { aspect-ratio: 1; border-radius: 6px; background-size: cover; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; transition: transform 0.12s; }
+.hc-tile.on { transform: scale(0.94); outline: 3px solid var(--ember); outline-offset: -3px; }
+.hc-tile.on::after { content: "✓"; position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: var(--ember); color: var(--ink); font-weight: 800; font-size: 13px; display: grid; place-items: center; }
+.troupe { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 0 26px; background: rgba(0, 0, 0, 0.62); animation: fade 0.25s; }
+.troupe-card { position: relative; width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 20px; background: rgba(22, 17, 27, 0.97); border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.troupe-yes { min-height: 54px; font-weight: 750; animation: pulse 0.8s ease-in-out infinite alternate; }
+.troupe-no { align-self: center; font-size: 12px; color: rgba(189, 179, 191, 0.65); min-height: 30px; }
+.troupe-x { position: absolute; top: 6px; right: 6px; width: 34px; height: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(189, 179, 191, 0.5); transition: left 0.3s cubic-bezier(0.3, 1.6, 0.5, 1), right 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.troupe-x .icon { width: 12px; height: 12px; }
+.troupe-x small { font-size: 9px; }
+.troupe-x.moved { right: auto; left: 6px; }
+
 /* ---------- 议事与夜谈 ---------- */
 .note-slip { display: flex; flex-direction: column; gap: 10px; } .note-slip:nth-of-type(even) { rotate: 0.4deg; } .note-slip:nth-of-type(odd) { rotate: -0.3deg; }
 .note-slip.cut { opacity: 0.7; } .note-slip.cut .q { text-decoration: line-through; text-decoration-color: rgba(33, 26, 36, 0.5); }

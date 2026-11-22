@@ -1,0 +1,120 @@
+/* 牌局 · 四夜之约：火堆边的一张桌。座位是一排牌背，出事的人才翻开；旁白像有人在耳边念。 */
+.fate {
+  position: absolute; inset: 0; z-index: 62; overflow: hidden;
+  display: flex; flex-direction: column;
+  background: var(--black); color: var(--text); font-family: var(--body);
+  --fate-glass: rgba(9, 7, 13, 0.7);
+  --fate-hair: rgba(237, 230, 217, 0.14);
+}
+.fate > .atmo { z-index: 0; }
+.fate > :not(.atmo):not(.fate-tint):not(.fate-verdict) { position: relative; z-index: 2; }
+.fate-tint { position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: background 1.2s ease; }
+.fate[data-mood="night"] .fate-tint { background: radial-gradient(ellipse at 50% 30%, rgba(92, 58, 140, 0.32), rgba(10, 6, 16, 0.55) 70%); }
+.fate[data-mood="dawn"] .fate-tint { background: radial-gradient(ellipse at 50% 20%, rgba(120, 140, 170, 0.26), rgba(10, 12, 18, 0.55) 70%); }
+.fate[data-mood="day"] .fate-tint { background: radial-gradient(ellipse at 50% 40%, rgba(227, 143, 64, 0.2), rgba(14, 9, 8, 0.5) 72%); }
+.fate[data-mood="blood"] .fate-tint { background: radial-gradient(ellipse at 50% 40%, rgba(160, 30, 50, 0.4), rgba(18, 4, 8, 0.66) 72%); }
+
+.fate button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; touch-action: manipulation; }
+.fate :focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+
+/* 顶栏 */
+.fate-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 8px; }
+.fate-top-l { display: flex; flex-direction: column; min-width: 0; }
+.fate-top-l b { font: 900 24px/1.2 var(--display); letter-spacing: 0.08em; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); }
+.fate-top-l span { font-size: 12.5px; color: var(--dim); }
+.fate-top-r { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.fate-top-r span { font-size: 12.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.fate-x { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: rgba(0, 0, 0, 0.5) !important; border: 1px solid var(--fate-hair) !important; }
+.fate-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+/* 桌上的十个座位 */
+.fate-seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 6px; padding: 6px 16px 10px; }
+.fate-seat { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.fate-face { position: relative; width: 44px; height: 50px; border-radius: 6px; background-size: cover; background-position: 50% 18%; border: 1.5px solid rgba(237, 230, 217, 0.22); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55); transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease, filter 0.4s ease; }
+.fate-back { background: repeating-linear-gradient(45deg, rgba(227, 143, 64, 0.08) 0 4px, transparent 4px 9px), linear-gradient(160deg, #2c2033, #140e19); }
+.fate-back::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 1px solid rgba(227, 143, 64, 0.5); transform: rotate(45deg); }
+.fate-seat b { max-width: 100%; font-size: 11px; font-weight: 550; color: rgba(237, 230, 217, 0.82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fate-seat.me .fate-face { border-color: var(--ember); box-shadow: 0 0 0 1px rgba(227, 143, 64, 0.4), 0 0 16px rgba(227, 143, 64, 0.45); }
+.fate-seat.me b { color: var(--ember); }
+.fate-seat.out .fate-face { filter: grayscale(0.85) brightness(0.55); }
+.fate-seat.out b { color: rgba(189, 179, 191, 0.5); text-decoration: line-through; }
+.fate-seat.puller .fate-face { filter: grayscale(0.2) brightness(0.8); border-color: var(--rose); box-shadow: 0 0 12px rgba(204, 77, 115, 0.55); }
+.fate-seat.puller b { color: var(--rose); }
+.fate-seat.say .fate-face { transform: translateY(-3px); border-color: var(--ember); box-shadow: 0 0 18px rgba(227, 143, 64, 0.7); }
+.fate-seat.say b { color: var(--ember); }
+
+/* 旁白与选项 */
+.fate-stage { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 10px 20px 14px; display: flex; flex-direction: column; scrollbar-width: none; }
+.fate-stage::-webkit-scrollbar { display: none; }
+.fate-narr { margin: auto 0 0; min-height: 5.8em; font-size: 16.5px; line-height: 1.95; letter-spacing: 0.02em; text-align: center; color: rgba(237, 230, 217, 0.95); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9); white-space: pre-line; cursor: pointer; overflow-wrap: anywhere; }
+.fate-ask { margin: 14px 0 0; min-height: 1.4em; text-align: center; font: 700 16px/1.5 var(--display); letter-spacing: 0.08em; color: var(--ember); }
+.fate-opts { display: none; flex-direction: column; gap: 10px; margin-top: 16px; }
+.fate-opts.on { display: flex; }
+.fate-opt { display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 52px; padding: 13px 14px; text-align: left; border-radius: 12px; background: var(--fate-glass) !important; border: 1px solid var(--fate-hair) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: fate-rise 0.35s ease-out both; transition: border-color 0.15s, background 0.15s; }
+.fate-opt:nth-child(2) { animation-delay: 0.06s; } .fate-opt:nth-child(3) { animation-delay: 0.12s; }
+.fate-opt:active { border-color: rgba(227, 143, 64, 0.6) !important; background: rgba(40, 26, 50, 0.85) !important; }
+.fate-letter { flex-shrink: 0; width: 26px; height: 26px; display: grid; place-items: center; margin-top: 1px; border-radius: 4px; border: 1px solid rgba(227, 143, 64, 0.5); color: var(--ember); font: 700 13px/1 var(--display); }
+.fate-opt-t { flex: 1; min-width: 0; font-size: 15px; line-height: 1.6; color: rgba(237, 230, 217, 0.94); }
+.fate-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; padding: 0 18px; border-radius: 12px; background: var(--ember) !important; color: var(--ink) !important; font-weight: 650 !important; }
+.fate-btn.quiet { background: rgba(0, 0, 0, 0.5) !important; color: var(--text) !important; font-weight: 550 !important; border: 1px solid rgba(237, 230, 217, 0.16) !important; min-height: 46px; }
+.fate-btn:active { transform: scale(0.97); }
+
+/* 四个维度：只有指针，没有分数 */
+.fate-dials { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 16px; padding: 8px 16px 16px; }
+.fate-dial { display: flex; align-items: center; gap: 5px; }
+.fate-dial i { font-style: normal; font-size: 11px; color: rgba(189, 179, 191, 0.7); }
+.fate-dial em { position: relative; display: block; width: 36px; height: 3px; border-radius: 3px; background: rgba(237, 230, 217, 0.18); }
+.fate-dial b { position: absolute; top: -3px; width: 3px; height: 9px; margin-left: -1.5px; border-radius: 2px; background: var(--ember); transition: left 0.5s ease; }
+
+/* 结算页 */
+.fate-verdict { position: absolute; inset: 0; z-index: 5; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 26px 18px 30px; background: rgba(8, 6, 11, 0.82); display: flex; flex-direction: column; gap: 16px; animation: fate-fade 0.4s ease-out; }
+.fate-verdict[hidden] { display: none; }
+.fate.fate-v-on > .fate-top, .fate.fate-v-on > .fate-seats, .fate.fate-v-on > .fate-stage, .fate.fate-v-on > .fate-dials { visibility: hidden; }
+.fate-verdict > * { flex-shrink: 0; min-width: 0; }
+.fate-v-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 6px; text-align: center; }
+.fate-kicker { font-size: 12px; letter-spacing: 0.3em; color: var(--dim); }
+.fate-code { font: 900 64px/1.1 var(--display); letter-spacing: 0.14em; color: var(--text); text-shadow: 0 0 30px rgba(227, 143, 64, 0.35); margin-right: -0.14em; }
+.fate-nick { font: 700 16px/1.4 var(--display); letter-spacing: 0.2em; color: var(--ember); }
+.fate-stack { font-size: 12px; letter-spacing: 0.18em; color: var(--dim); }
+.fate-block { padding: 16px; border-radius: 16px; background: rgba(20, 14, 26, 0.72); border: 1px solid rgba(255, 255, 255, 0.07); }
+.fate-block h3 { margin: 0 0 12px; display: flex; align-items: center; gap: 8px; font: 700 15px/1.3 var(--display); letter-spacing: 0.14em; color: var(--ember); }
+.fate-block h3::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(227, 143, 64, 0.35), transparent); }
+.fate-axis { margin-bottom: 14px; } .fate-axis:last-child { margin-bottom: 0; }
+.fate-axis-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; }
+.fate-axis-top b { font-weight: 550; color: var(--dim); } .fate-axis-top b.hi { color: var(--text); }
+.fate-axis-top span { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.fate-axis-bar { position: relative; height: 5px; margin: 8px 0 6px; border-radius: 5px; background: linear-gradient(90deg, rgba(120, 84, 170, 0.45), rgba(30, 20, 40, 0.9), rgba(204, 77, 115, 0.45)); }
+.fate-axis-bar i { position: absolute; top: 50%; width: 11px; height: 11px; margin-left: -5.5px; transform: translateY(-50%) rotate(45deg); background: var(--ember); box-shadow: 0 0 12px rgba(227, 143, 64, 0.8); }
+.fate-axis p { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--dim); }
+.fate-drive { margin: 0 0 12px; font: 700 16px/1.8 var(--display); color: var(--text); }
+.fate-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fate-two > div { padding: 9px 11px; border-radius: 8px; background: rgba(0, 0, 0, 0.35); font-size: 13px; line-height: 1.6; color: rgba(237, 230, 217, 0.88); min-width: 0; }
+.fate-two span { display: block; font-size: 11px; letter-spacing: 0.2em; color: var(--ember); margin-bottom: 2px; }
+.fate-fit { display: flex; gap: 14px; align-items: flex-start; }
+.fate-fit-card { flex: none; width: 82px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.fate-fit-card i { display: block; width: 82px; height: 90px; border-radius: 6px; background-size: cover; background-position: 50% 18%; border: 1px solid rgba(227, 143, 64, 0.45); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6); }
+.fate-fit-card b { font: 700 13px/1.3 var(--display); color: var(--ember); letter-spacing: 0.1em; }
+.fate-fit-body { flex: 1; min-width: 0; }
+.fate-fit-body p { margin: 0; font-size: 14px; line-height: 1.75; color: rgba(237, 230, 217, 0.92); }
+.fate-fit-body small { display: block; margin-top: 8px; font-size: 12.5px; color: var(--dim); }
+.fate-ledger { display: grid; gap: 6px; }
+.fate-ledger > div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 6px; border-bottom: 1px dashed rgba(237, 230, 217, 0.12); font-size: 13.5px; }
+.fate-ledger span { color: var(--dim); flex: none; }
+.fate-ledger b { font-weight: 550; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.fate-ledger b.good { color: var(--moss); } .fate-ledger b.bad { color: var(--rose); }
+.fate-note { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: rgba(189, 179, 191, 0.7); }
+.fate-v-actions { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+
+@keyframes fate-rise { from { transform: translateY(8px); opacity: 0; } }
+@keyframes fate-fade { from { opacity: 0; } }
+
+@media (max-height: 700px) {
+  .fate-face { width: 38px; height: 42px; }
+  .fate-seats { gap: 6px; padding-bottom: 6px; }
+  .fate-narr { font-size: 15.5px; line-height: 1.85; min-height: 4.5em; }
+  .fate-top-l b { font-size: 21px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fate-tint, .fate-face, .fate-dial b { transition: none; }
+  .fate-opt, .fate-verdict { animation: none; }
+}

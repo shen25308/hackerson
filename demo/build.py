@@ -3,7 +3,7 @@
 
 用法：python3 demo/build.py [另存一份不带 <html> 外壳的版本的路径]
 """
-import base64, glob, os, sys
+import base64, glob, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'src')
@@ -24,7 +24,9 @@ for path in sorted(glob.glob(os.path.join(RES, 'Assets.xcassets', '*.imageset', 
 assets['bgm'] = data_url(os.path.join(RES, 'bgm_default.m4a'), 'audio/mp4')
 
 asset_js = 'window.ASSET = {\n' + ',\n'.join(f'  {k}: "{v}"' for k, v in assets.items()) + '\n};'
-scripts = ''.join(f'<script>\n{read(n)}\n</script>\n' for n in ('core.js', 'sound.js', 'ui.js', 'lab.js', 'ui2.js') if read(n))
+fate_data = json.load(open(os.path.join(RES, 'fate.json'), encoding='utf-8'))
+asset_js += '\nwindow.FATE_DATA = ' + json.dumps(fate_data, ensure_ascii=False).replace('</', '<\\/') + ';'
+scripts = ''.join(f'<script>\n{read(n)}\n</script>\n' for n in ('core.js', 'sound.js', 'ui.js', 'lab.js', 'fate.js', 'ui2.js') if read(n))
 
 content = f'''<title>人类含量</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -32,6 +34,7 @@ content = f'''<title>人类含量</title>
 <style>
 {read('style.css')}
 {read('lab.css')}
+{read('fate.css')}
 </style>
 <div id="shell">
   <div id="view"></div>

@@ -3,9 +3,36 @@
 
 /* ---------- 议事：三张字条 ---------- */
 VIEWS.council = () => {
-  const body = UI.councilMode === 'slips' ? slipsView() : talkView();
-  return `<section class="screen">${Atmo.html('square')}<div class="scroll"><div style="align-self:center;width:230px">${seg('council-mode', [['slips', '三张字条'], ['talk', '五席夜谈']], UI.councilMode)}</div>${body}</div></section>`;
+  const body = UI.councilMode === 'slips' ? slipsView() : UI.councilMode === 'fate' ? fateView() : talkView();
+  return `<section class="screen">${Atmo.html('square')}<div class="scroll"><div style="align-self:center;width:300px;max-width:100%">${seg('council-mode', [['slips', '三张字条'], ['fate', '四夜之约'], ['talk', '五席夜谈']], UI.councilMode)}</div>${body}</div></section>`;
 };
+
+/* ---------- 议事：四夜之约 ---------- */
+function fateView() {
+  if (!window.Fate) return '<p class="sub">牌桌还在搭。</p>';
+  const st = Fate.status(Store.gateCount);
+  const progress = st.started ? `已记下 ${st.answered} / 12 个抉择 · ${['', '第一夜', '第二夜', '第三夜', '第四夜'][st.night] || ''}` : '一局四夜，十二个抉择。';
+  const gate = st.started && st.nextNeed > 0 ? `<div class="row small"><span class="rose">${icon('lock')}</span><span class="grow">下一夜要再做完 ${st.nextNeed} 件事，天才会黑。</span><button type="button" class="link ember" data-act="tab" data-tab="tasks">去任务板</button></div>` : '';
+  const result = st.done ? `<div class="raised row" style="gap:12px"><i class="portrait art-${st.fitArt}" style="width:54px;height:58px"></i><span class="grow"><b style="font:900 22px/1.2 var(--display)">${esc(st.type)}</b> <span class="small dim">${esc(st.nick)}</span><br><span class="small">最像${esc(st.fitName)}</span></span><button type="button" class="btn quiet fit" data-act="fate-verdict">看结果</button></div><button type="button" class="link" style="align-self:flex-start" data-act="fate-reset">重测，清空这一局</button>` : '';
+  return `<div class="stack"><h1 class="title sm">十个人，三个提线人，四夜。</h1><p style="font-size:14px;color:rgba(237,230,217,.88)">每一夜的选择，会决定谁出事、谁被请出山庄，也会一点点照出你是什么样的人。</p></div>
+  <div class="raised stack"><span class="sub">${progress}</span>${gate}<button type="button" class="btn" data-act="fate-open">${st.started && !st.done ? '接着打' : st.done ? '再打一局' : '开局'}</button></div>
+  ${result}
+  <div class="stack tight"><div class="row top"><span class="ember">${icon('moon')}</span><span class="grow small">夜里按你的身份行动，提线人会在这一夜动手。</span></div><div class="row top"><span class="ember">${icon('council')}</span><span class="grow small">白天怎么说话、怎么投票，决定谁被请出山庄。</span></div><div class="row top"><span class="ember">${icon('task')}</span><span class="grow small">每做完一件现实里的事，下一夜才会降临。</span></div></div>`;
+}
+function openFate(toVerdict) {
+  if (!window.Fate) return;
+  closeSheet(true);
+  Fate.open({
+    completed: Store.gateCount, role: Store.s.role, roleName: Store.role.name, roleArt: Store.role.art, toVerdict: !!toVerdict,
+    onExit(reason) { if (reason === 'tasks') go('tasks'); else render(); },
+    onResult(r) { Store.log('fate', `测出 ${r.type} · ${r.nick} · 最像${r.fitName}`); Store.save(); },
+  });
+}
+Object.assign(ACT, {
+  'fate-open': () => openFate(false),
+  'fate-verdict': () => openFate(true),
+  'fate-reset'() { Fate.reset(); sfx('undo'); toast('清空了，可以重新开一局。'); render(); },
+});
 function councilQuest() { const d = Store.today; return Store.quest(UI.councilTask) || d.tasks.find((t) => !t.done) || d.tasks[0] || null; }
 function slipsView() {
   const t = councilQuest();
@@ -150,12 +177,18 @@ SHEETS.ferry = () => {
 ACT['go-talk'] = () => openTalk();
 
 /* ---------- 木偶工坊 ---------- */
+function personaRow() {
+  const st = window.Fate ? Fate.status(Store.gateCount) : null;
+  if (!st || !st.done) return '';
+  return `<button type="button" class="raised row" style="gap:12px;text-align:left;width:100%" data-act="fate-verdict"><i class="portrait art-${st.fitArt}" style="width:44px;height:48px"></i><span class="grow"><span class="small dim">四夜之约测出的牌风</span><br><b>${esc(st.type)} · ${esc(st.nick)}</b> <span class="small">最像${esc(st.fitName)}</span></span><span class="chev">${icon('arrow')}</span></button>`;
+}
 VIEWS.puppets = () => {
   const s = Store.s, xp = Store.xp, into = xp % Rules.xpPerLevel, left = Store.switchRemaining, tier = Store.strategyTier;
   const roster = Object.entries(ROLES).map(([id, r]) => `<div class="row"><i class="portrait art-${r.art}" style="width:54px;height:58px"></i><span class="grow"><b>${r.name}</b><br><span class="small dim">${r.skill}</span></span>${id === s.role ? '<span class="tag fill-ember">同行中</span>' : `<button type="button" class="btn quiet fit" data-act="switch-role" data-role="${id}" ${left ? 'disabled' : ''}>换</button>`}</div>`).join('');
   const cards = s.cards.length ? `<div class="cards">${s.cards.slice().reverse().map((c) => `<div><div class="art art-${['card_arrow', 'card_ward', 'card_potion'][c.kind]}"></div><b class="small">${esc(c.name)}</b><br><span class="small ember">${esc(c.effect)}</span></div>`).join('')}</div>` : '<p class="small dim">必做一件不漏，再多做一步额外，就有一次机会。连续三天不漏，再加一次。</p>';
   return `<section class="screen">${Atmo.html('docks')}<div class="scroll">${head('木偶工坊')}
   <div class="row top" style="gap:14px"><i class="portrait art-${Store.role.art}" style="width:96px;height:106px"></i><div class="grow stack" style="gap:8px"><div class="row base"><b class="title sm">${Store.role.name}</b><b class="ember">Lv.${Store.level}</b></div><div class="stack tight">${meter(Store.hp / 100, 'rose')}<span class="small dim">生命 ${Store.hp} / 100</span></div><div class="stack tight">${meter(into / Rules.xpPerLevel)}<span class="small dim">经验 ${xp} · 再 ${Rules.xpPerLevel - into} 升级</span></div><span class="small dim">专注 ${s.attack} · 韧性 ${s.magic} · 连续 ${s.streak} 天</span></div></div>
+  ${personaRow()}
   <div class="stack"><div class="row base"><h2 class="h2 grow">换一位同行</h2><span class="sub">${left ? `还差 ${left} 经验` : '现在可以换'}</span></div>${roster}</div>
   <div class="stack"><div class="row base"><h2 class="h2 grow">夜谈第 ${tier + 1} 手</h2><span class="sub">做完 ${Store.completed} 项</span></div><div class="tiers">${Strategy.names.map((n, i) => `<div class="${i <= tier ? 'on' : ''}"><b>${n}</b>${i <= tier ? '已会' : Strategy.thresholds[i] + ' 项'}</div>`).join('')}</div><button type="button" class="btn quiet" data-act="go-talk">去火堆旁坐一局</button></div>
   <div class="stack"><div class="row base"><h2 class="h2 grow">抽到的牌</h2><span class="sub">${s.cards.length} 张</span></div><button type="button" class="btn" data-act="draw-open" ${s.draws < 1 ? 'disabled' : ''}>${s.draws > 0 ? `抽一张 · 还有 ${s.draws} 次` : '还没有抽牌机会'}</button>${cards}</div></div></section>`;
@@ -283,11 +316,26 @@ Object.assign(ACT, {
   'snd-music'() { Sound.set('music', !Sound.prefs.music); sfx(Sound.prefs.music ? 'toggle-on' : 'toggle-off'); renderSheet(); },
   'snd-test': (b) => Sound.play(b.dataset.cue, { force: true }),
 });
+/* 恨点图鉴：界面会在哪些地方故意让你不爽。 */
+const HATES = [
+  ['pen', '写待办', '你一停笔，它就替你把话写完。'],
+  ['mask', '任务板', '每天第一次来，剧团递上“今日安排”。拒绝要点一行自嘲的小字，叉第一次还会躲开。'],
+  ['timer', '开始计时', '假加载冲到 99% 就卡住，旁边递上“先刷会儿再说”。'],
+  ['hand', '我做完了', '头两次会躲开你的手指。'],
+  ['sparkle', '登记完成', '最显眼的是“一键全部打勾”。'],
+  ['eye', '人类验证', '每天第一次登记要点出所有木偶。第一次选对了也判你没通过。'],
+  ['timer', '长按确认', '按到一半，被它打断一次。'],
+  ['drag', '撤销', '想点“保留”，它跟“撤销”换了位置。'],
+  ['scissors', '剪字条', '替你预选一张错的，8 秒后自己下剪。'],
+  ['moon', '收工', '默认勾好“把没做完的也记成做完”。'],
+];
+const hateList = () => `<div class="raised stack"><b style="font-size:16px">恨点图鉴</b>${HATES.map(([ic, name, text]) => `<div class="row top"><span class="rose">${icon(ic)}</span><span class="grow"><b style="font-size:14px">${name}</b><br><span class="small dim">${text}</span></span></div>`).join('')}<p class="small dim">每一次你亲手拦下或被它带走，都会算进人类含量。</p></div>`;
+
 SHEETS.help = (s) => {
   const rule = (ic, text) => `<div class="row top"><span class="ember">${icon(ic)}</span><span class="grow" style="font-size:14px">${text}</span></div>`;
   return { title: '设置与玩法', scene: 'chapel',
-    body: `<div class="stack"><h2 class="title sm">可以借力，决定留给自己。</h2>${rule('task', '写下今天的约定，做完后亲手登记。完成得越干脆，经验越多。')}${rule('map', '每整件做完一项，地图上的雾散一点，新的地点和夜谈策略随之开放。')}${rule('scissors', '三张字条里有一张在牵着你走；五席夜谈里有一个人拿了钥匙。')}${rule('hand', '界面会在细节里使坏。亲手拦下，人类含量就不会掉。')}</div>
-    <div class="hr"></div>${seg('tone', [['1', '嘴损一点'], ['0', '温和一点']], Store.sharp ? '1' : '0')}${sw('mischief', Store.mischief, '让界面使坏')}${sw('unlock-all', Store.unlockAll, '演示：地图全部开门')}<div class="hr"></div>
+    body: `<div class="stack"><h2 class="title sm">可以借力，决定留给自己。</h2>${rule('task', '写下今天的约定，做完后亲手登记。完成得越干脆，经验越多。')}${rule('map', '每整件做完一项，地图上的雾散一点，新的地点和夜谈策略随之开放。')}${rule('moon', '四夜之约：十个人里藏着三个提线人。每做完一件现实里的事，下一夜才会降临；四夜走完，测出你的牌风。')}${rule('scissors', '三张字条里有一张在牵着你走；五席夜谈里有一个人拿了钥匙。')}${rule('hand', '界面会在细节里使坏。亲手拦下，人类含量就不会掉。')}</div>
+    <div class="hr"></div>${seg('tone', [['1', '嘴损一点'], ['0', '温和一点']], Store.sharp ? '1' : '0')}${sw('mischief', Store.mischief, '让界面使坏')}${Store.mischief ? hateList() : ''}${sw('unlock-all', Store.unlockAll, '演示：地图全部开门')}<div class="hr"></div>
     <button type="button" class="btn quiet" data-act="${Store.demo ? 'exit-demo-sheet' : 'enter-demo'}">${Store.demo ? '退出示例' : '体验示例'}</button><button type="button" class="btn quiet" data-act="sheet" data-sheet="sound">声音与音乐</button><button type="button" class="btn quiet" data-act="replay-intro">重看开场</button>
     <button type="button" class="link rose" data-act="reset">${s.form.confirmReset ? '再点一次，清空这台设备上的全部记录' : '清空记录，从头演示'}</button>` };
 };
@@ -323,6 +371,14 @@ function renderCover() {
     <div class="words"><span class="ember">${icon(ic).replace('class="icon"', 'class="icon" style="width:28px;height:28px"')}</span><h1>${title}</h1>${lines.map((l) => `<p>${l}</p>`).join('')}</div>
     <div class="dots">${INTRO.map((_, i) => `<i class="${i === c.page ? 'on' : ''}"></i>`).join('')}</div>
     ${last ? `<div class="stack"><button type="button" class="btn" data-act="intro-done" data-exit="write">写下第一件事</button><button type="button" class="btn quiet" data-act="intro-done" data-exit="demo">先看看示例</button><button type="button" class="link" style="align-self:center" data-act="intro-done" data-exit="enter">直接进山庄</button></div>` : '<button type="button" class="btn" data-act="intro-next">继续</button>'}</section>`;
+  } else if (c.name === 'troupe') {
+    host.innerHTML = `<div class="troupe" role="dialog" aria-modal="true" aria-label="剧团替你排好了今天"><div class="troupe-card">
+      <button type="button" class="troupe-x${c.moved ? ' moved' : ''}" data-act="troupe-x" aria-label="关闭">${icon('close')}${c.moved ? '<small>关不掉？</small>' : ''}</button>
+      <div class="row small dim"><span class="rose">${icon('mask')}</span>木偶剧团</div>
+      <h2 class="title sm">剧团替你排好了今天</h2>
+      <p style="font-size:14px;color:rgba(237,230,217,.88)">交给剧团，你只管照着做。哪件先做、做多久、做到什么程度，都不用你再想。</p>
+      <button type="button" class="btn danger troupe-yes" data-act="troupe-yes">好，听剧团安排</button>
+      <button type="button" class="troupe-no" data-act="troupe-no">不用了，我宁愿自己瞎忙</button></div></div>`;
   } else if (c.name === 'draw') {
     const card = c.card;
     host.innerHTML = `<section class="intro" style="align-items:center;justify-content:center;gap:26px">${Atmo.html('docks', true)}<button type="button" class="flip${card ? ' open' : ''}" data-act="draw-flip" aria-label="${card ? esc(card.name) : '翻开这张牌'}"><div class="flip-inner"><div class="flip-face flip-back">？</div><div class="flip-face flip-front ${card ? 'art-' + ['card_arrow', 'card_ward', 'card_potion'][card.kind] : ''}"></div></div></button>
@@ -330,6 +386,18 @@ function renderCover() {
   }
 }
 Object.assign(ACT, {
+  'troupe-x'() {
+    if (!UI.cover.moved) { UI.cover.moved = true; sfx('swap'); renderCover(); return; }
+    ACT['troupe-no']();
+  },
+  'troupe-no'() { closeCover(); Store.logBait(false, '拒绝了剧团递来的“今日安排”'); sfx('resist'); render(); },
+  'troupe-yes'() {
+    closeCover();
+    Store.logBait(true, '接受了剧团递来的“今日安排”');
+    Store.addQuest('先看完剧团推荐的 5 条教程', true, 40, '');
+    sfx('taken'); render();
+    toast('你把今天交了出去。任务板上多了一项「先看完剧团推荐的 5 条教程」。');
+  },
   'intro-next'() { if (UI.cover.page < INTRO.length - 1) { UI.cover.page++; sfx('paper'); renderCover(); } },
   'intro-done'(b) {
     const exit = b.dataset.exit;
@@ -350,7 +418,7 @@ document.addEventListener('pointerdown', (e) => {
 }, true);
 document.addEventListener('keydown', (e) => {
   Sound.unlock();
-  if (e.key === 'Escape') { if (UI.sheet) closeSheet(); return; }
+  if (e.key === 'Escape') { if (window.Fate && Fate.isOpen()) return; if (UI.sheet) closeSheet(); return; }
   const hold = (e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-hold]');
   if (hold && !e.repeat) { e.preventDefault(); const act = ACT[hold.dataset.hold]; if (act) act(hold); }
 });
