@@ -9,18 +9,20 @@
 const Login = (() => {
   const KEY = 'human-content-demo-account-v1';
   const PUPPET_NAMES = ['守门人', '药师', '寻迹人', '琴师', '织梦人', '双生木偶', '灰毛', '戴冠者', '玫瑰夫人'];
-  const REVERSED = PUPPET_NAMES.map((n) => [...n].reverse().join(''));
+  /* 密码框里浏览器会关掉中文输入法，所以木偶名用拼音首字母（大写），星期几用英文缩写。 */
+  const INITIALS = ['SMR', 'YS', 'XJR', 'QS', 'ZMR', 'SSMO', 'HM', 'DGZ', 'MGFR'];
+  const REVERSED = INITIALS.map((n) => [...n].reverse().join(''));
   const USED_BY = ['玫瑰夫人', '戴冠者', '灰毛', '双生木偶'];
   const isPrime = (n) => { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; };
-  const WEEK = '周' + '日一二三四五六'[new Date().getDay()];
+  const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
   const RULES = [
     { t: '至少 8 个字符', ok: (p) => [...p].length >= 8 },
     { t: '要有一个数字', ok: (p) => /\d/.test(p) },
     { t: '要有一个大写字母', ok: (p) => /[A-Z]/.test(p) },
     { t: '要有一个符号，比如 ! 或 #', ok: (p) => /[!-/:-@[-`{-~！？。，、；：]/.test(p) },
-    { t: '要包含一位木偶的名字，但要倒过来写（“守门人”写成“人门守”）', ok: (p) => REVERSED.some((n) => p.includes(n)) },
+    { t: '要包含一位木偶名字的拼音首字母，大写、倒过来写（守门人 → SMR → RMS）', ok: (p) => REVERSED.some((n) => p.includes(n)) },
     { t: '所有数字加起来要等于 7', ok: (p) => (p.match(/\d/g) || []).reduce((n, d) => n + Number(d), 0) === 7 },
-    { t: '要写上今天是星期几（写成“周一”这样）', ok: (p) => p.includes(WEEK) },
+    { t: '要写上今天是星期几的英文缩写（比如 Mon、Tue）', ok: (p) => p.toLowerCase().includes(WEEK.toLowerCase()) },
     { t: (p) => `总长度要是质数（现在是 ${[...p].length} 个字）`, ok: (p) => isPrime([...p].length) },
   ];
   const CLAUSES = [
@@ -375,7 +377,9 @@ const Login = (() => {
     if (!e.isComposing) play('type', { strength: 0.3 });
     if (k === 'pass' && S.step === 'register') {
       paintRules();
-      if (!S.saidBack && PUPPET_NAMES.some((n) => S.pass.includes(n)) && !REVERSED.some((n) => S.pass.includes(n))) { S.saidBack = true; say('木偶的名字要倒过来写。'); }
+      const p = S.pass, hit = REVERSED.some((n) => p.includes(n));
+      if (!hit && !S.saidCase && REVERSED.some((n) => p.toUpperCase().includes(n))) { S.saidCase = true; say('首字母要大写。'); }
+      else if (!hit && !S.saidBack && INITIALS.some((n) => n.length > 2 && p.includes(n))) { S.saidBack = true; say('首字母要倒过来写：SMR → RMS。'); }
     }
   }
   function onKey(e) {
